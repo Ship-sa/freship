@@ -1,9 +1,11 @@
 package me.yeon.freship.common.domain;
 
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import me.yeon.freship.common.domain.constant.ErrorCode;
 
+@Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ErrorResponse {
     private String name;
