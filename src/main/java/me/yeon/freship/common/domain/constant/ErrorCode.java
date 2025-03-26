@@ -21,6 +21,10 @@ public enum ErrorCode {
     SAME_AS_OLD_PASSWORD(HttpStatus.NOT_FOUND, "MEMBER-10", "새 비밀번호는 기존 비밀번호와 같을 수 없습니다."),
     NOT_OWNER_AUTHORITY(HttpStatus.UNAUTHORIZED, "MEMBER-11", "사장 권한을 가지고 있지 않습니다."),
 
+    // Store 에러코드
+    STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-1", "가게가 존재하지 않습니다."),
+    NOT_STORE_OWNER(HttpStatus.FORBIDDEN, "STORE-2", "본인의 가게가 아닙니다."),
+
     EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다.");
 
     private final HttpStatus status;
