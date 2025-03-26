@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController {
 
     private final MemberService memberService;
-    private final MemberRepository memberRepository;
 
     @GetMapping("/members")
     public ResponseEntity<MemberfindResponse> findMember(@AuthenticationPrincipal AuthMember authMember) {

@@ -11,7 +11,7 @@ public enum ErrorCode {
     // Member 에러코드
     INVALID_MEMBER_ROLE(HttpStatus.BAD_REQUEST, "MEMBER-1", "유효하지 않은 권한입니다."),
     EMAIL_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "MEMBER-2", "이미 존재하는 이메일입니다."),
-    NOT_FOUND_MEMBER(HttpStatus.NOT_FOUND, "MEMBER-3", "존재하지 않는 이메일입니다."),
+    NOT_FOUND_MEMBER(HttpStatus.NOT_FOUND, "MEMBER-3", "존재하지 않는 멤버입니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "MEMBER-4", "잘못된 비밀번호입니다."),
     INVALID_JWT(HttpStatus.UNAUTHORIZED, "MEMBER-5", "유효하지 않는 JWT 서명입니다."),
     EXPIRED_JWT(HttpStatus.UNAUTHORIZED, "MEMBER-6", "만료된 JWT 토큰입니다."),
