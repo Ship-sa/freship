@@ -23,6 +23,16 @@ public class ProductController {
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam String name
     ) {
-        return ResponseEntity.ok(productService.searchProducts(name, pageNum, pageSize));
+        return ResponseEntity.ok(productService.searchProductsWithoutCache(name, pageNum, pageSize));
+    }
+
+    // In-memory Cache 적용(Local Memory)
+    @GetMapping("/v2/products/search")
+    public ResponseEntity<Response<List<ProductSearchResponse>>> searchProductsWithCache(
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam String name
+    ) {
+        return ResponseEntity.ok(productService.searchProductsWithCache(name, pageNum, pageSize));
     }
 }
