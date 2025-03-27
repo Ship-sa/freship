@@ -11,17 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/v2/products")
-public class ProductController {
-
-    private final ProductService productService;
-
-    // 조회수를 포함하지 않은 일반 단건 상품 조회
-    @GetMapping("/{id}")
-    public ResponseEntity<ProductReadCountResponse> findProduct(@PathVariable Long id){
-        ProductReadCountResponse response = productService.findProductV1(id);
-        return ResponseEntity.ok(response);
-    }
+@RequestMapping("/v1/products")
+public class ProductControllerV1 {
 
 
 }

@@ -20,8 +20,8 @@ public class RedisConfig {
         // RedisConnectionFactory는 Redis 서버와의 연결을 관리하는 객체로, 이를 사용해 RedisTemplate의 연결을 설정
         template.setConnectionFactory(redisConnectionFactory);
 
-        template.setKeySerializer(new StringRedisSerializer()); // key 값을 string으로 저장
-        template.setValueSerializer(new GenericToStringSerializer<>(Long.class)); // value 값을 long으로 저장
+        template.setKeySerializer(new StringRedisSerializer()); // key 값을 String으로 저장
+        template.setValueSerializer(new GenericToStringSerializer<>(String.class)); // value 값을 String으로 저장
         return template;
     }
 
