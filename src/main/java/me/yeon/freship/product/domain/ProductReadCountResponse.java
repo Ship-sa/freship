@@ -3,6 +3,9 @@ package me.yeon.freship.product.domain;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 public class ProductReadCountResponse {
 
@@ -28,4 +31,5 @@ public class ProductReadCountResponse {
         this.imgUrl = imgUrl;
         this.description = description;
     }
+
 }

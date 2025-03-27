@@ -28,15 +28,16 @@ public class RedisUtils {
         return currentScore == null;
     }
 
-    public List<String> findTop10ProductId() {
+    public List<Long> findTop10ProductId() {
         Set<Object> objectSet = redisTemplate.opsForZSet().reverseRange("product:readCount",0, 9);
         if (objectSet == null) {
             return Collections.emptyList(); // 빈 Set 반환
         }
-        List<String> res = new ArrayList<>();
-        for (Object o : objectSet){
-            res.add((String) o);
-            System.out.println((String) o);
+        List<Long> res = new ArrayList<>();
+        for (Object o : objectSet) {
+            String value = (String) o;
+            String[] parts = value.split(":"); // "product:7" -> ["product", "7"]
+            res.add(Long.parseLong(parts[1])); // 숫자 부분만 추가
         }
         return res;
     }

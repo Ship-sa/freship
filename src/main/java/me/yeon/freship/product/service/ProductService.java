@@ -3,12 +3,17 @@ package me.yeon.freship.product.service;
 import lombok.RequiredArgsConstructor;
 import me.yeon.freship.common.utils.RedisUtils;
 import me.yeon.freship.product.domain.Product;
+import me.yeon.freship.product.domain.ProductRankResponse;
 import me.yeon.freship.product.infrastructure.ProductRepository;
 import me.yeon.freship.product.domain.ProductReadCountResponse;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -22,15 +27,16 @@ public class ProductService {
         Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException("Not Found"));
         Long readCount = addReadCount(id);
         ProductReadCountResponse productReadCountResponse = ProductReadCountResponse.builder()
-                .category(product.getCategory())
                 .id(product.getId())
                 .readCount(readCount)
-                .description(product.getDescription())
-                .imgUrl(product.getImgUrl())
                 .name(product.getName())
-                .price(product.getPrice())
                 .quantity(product.getQuantity())
+                .category(product.getCategory())
+                .price(product.getPrice())
                 .status(product.getStatus())
+                .price(product.getPrice())
+                .imgUrl(product.getImgUrl())
+                .description(product.getDescription())
                 .build();
         return productReadCountResponse;
     }
@@ -46,10 +52,21 @@ public class ProductService {
         return redisUtils.incrementScore(key, id).longValue();
     }
 
-    public List<String> findTop10ProductId() {
-        List<String> results = redisUtils.findTop10ProductId();
-        System.out.println(results);
-        return results;
+    // 조회수 기준 상위 10개의 상품 리스트 조회하기
+    @Cacheable(cacheNames = "getRanks", key = "'products:rank'", cacheManager = "productCacheManager")
+    public List<ProductRankResponse> findTop10ProductId() {
+        List<Long> idList = redisUtils.findTop10ProductId();
+        List<Product> products = productRepository.findProductsByRank(idList);
+
+        // 정렬
+        Map<Long, Integer> orderMap = new HashMap<>();
+        for (int i = 0; i < idList.size(); i++) {
+            orderMap.put(idList.get(i), i);
+        }
+        products.sort(Comparator.comparingInt(p -> orderMap.get(p.getId())));
+
+        List<ProductRankResponse> readCountResponses = ProductRankResponse.toProductRankResponseList(products);
+        return readCountResponses;
     }
 
     // 자정마다 모든 조회수 삭제
