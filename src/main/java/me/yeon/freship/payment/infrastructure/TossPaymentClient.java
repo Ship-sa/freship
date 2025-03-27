@@ -1,4 +1,4 @@
-package me.yeon.freship.payment.infrastructure.client;
+package me.yeon.freship.payment.infrastructure;
 
 import me.yeon.freship.payment.domain.CheckoutRequest;
 import org.springframework.stereotype.Controller;
