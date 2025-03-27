@@ -48,6 +48,7 @@ public class Product extends BaseEntity {
         this.status = status;
         this.category = category;
         this.price = price;
+        this.imgUrl = imgUrl;
         this.description = description;
     }
 
@@ -62,6 +63,14 @@ public class Product extends BaseEntity {
 
     public void updateImageUrl(String imgUrl) {
         this.imgUrl = imgUrl;
+    }
+
+    public void decreaseQuantity(int amount) {
+        this.quantity -= amount;
+    }
+
+    public void increaseQuantity(int amount) {
+        this.quantity -= amount;
     }
 
 }

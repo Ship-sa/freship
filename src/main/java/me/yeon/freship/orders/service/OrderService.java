@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -45,24 +46,27 @@ public class OrderService {
                 .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
 
         // product의 재고 차감
+        product.decreaseQuantity(orderAmount);
 
         String orderCode = orderCodeGenerator.create(product.getCategory(), getCurrentDate());
 
-        log.info("orderCode={}", orderCode);
         return repository.save(Order.newOrder(orderCode, member, product, orderAmount))
                 .getId();
     }
 
-
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void cancel(Long orderId) {
         // TODO: ErrorCode 변경
-        Order order = repository.findById(orderId)
+        Order order = repository.findByIdWithProduct(orderId)
                 .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
 
-        // Order의 상태가 배송 시작, 배송 완료일 때에는 취소할 수 없음.
+        // 주문의 상태가 배송 시작, 배송 완료일 때에는 취소할 수 없음.
+        if (order.getStatus() == OrderStatus.DELI_PROGRESS || order.getStatus() == OrderStatus.DELI_DONE) {
+            throw new ClientException(ErrorCode.INVALID_ORDER_STATUS);
+        }
 
-        // 재고를 다시 늘려야 함.
-
+        // 재고를 늘리고 상태를 결제 취소로 바꿈.
+        order.getProduct().increaseQuantity(order.getOrderCount());
         order.changeStatus(OrderStatus.CANCEL);
     }
 

@@ -43,9 +43,13 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "member_id")
     private Member member;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
+    private Product product;
+
     private Order(
             String orderCode, OrderStatus status, String productName,
-            int orderCount, int totalPrice, int deliveryFee, Member member
+            int orderCount, int totalPrice, int deliveryFee, Member member, Product product
     ) {
         this.orderCode = orderCode;
         this.status = status;
@@ -54,6 +58,7 @@ public class Order extends BaseEntity {
         this.totalPrice = totalPrice;
         this.deliveryFee = deliveryFee;
         this.member = member;
+        this.product = product;
     }
 
     // 주문서 생성
@@ -61,7 +66,7 @@ public class Order extends BaseEntity {
         return new Order(
                 orderCode, OrderStatus.PENDING, product.getName(),
                 amount, product.getPrice() * amount + DELIVERY_FEE, DELIVERY_FEE,
-                member
+                member, product
         );
     }
 
