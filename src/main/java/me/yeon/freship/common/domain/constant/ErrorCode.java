@@ -37,6 +37,9 @@ public enum ErrorCode {
     NOT_STORE_OWNER(HttpStatus.FORBIDDEN, "STORE-2", "본인의 가게가 아닙니다."),
     BIZ_REG_NUM_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "STORE-3", "이미 존재하는 사업자등록번호입니다."),
 
+    // Payment 에러코드
+    PAY_CONFIRM_FAILED(HttpStatus.BAD_REQUEST, "PAYMENT-1", "결제 승인 처리에 실패했습니다."),
+
     EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다.");
 
     private final HttpStatus status;
