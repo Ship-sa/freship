@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.yeon.freship.common.domain.constant.ErrorCode;
 import me.yeon.freship.common.exception.ClientException;
+import me.yeon.freship.common.infrastructure.ClockHolder;
 import me.yeon.freship.member.domain.Member;
 import me.yeon.freship.member.infrastructure.MemberRepository;
 import me.yeon.freship.orders.domain.CustomerOrderInfo;
@@ -23,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 @Slf4j @Service
@@ -31,6 +31,8 @@ import java.time.ZoneId;
 @Transactional
 public class OrderService {
     private final OrderCodeGenerator orderCodeGenerator;
+    private final ClockHolder clockHolder;
+
     private final OrderRepository repository;
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
@@ -50,7 +52,8 @@ public class OrderService {
 
         String orderCode = orderCodeGenerator.create(product.getCategory(), getCurrentDate());
 
-        return repository.save(Order.newOrder(orderCode, member, product, orderAmount))
+        return repository
+                .save(Order.newOrder(orderCode, member, product, orderAmount))
                 .getId();
     }
 
@@ -80,9 +83,7 @@ public class OrderService {
             throw new ClientException(ErrorCode.INVALID_REQ_DELIVERY);
         }
 
-        order.startDelivery(
-                LocalDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis()), ZoneId.systemDefault())
-        );
+        order.startDelivery(clockHolder.currentLocalDateTime());
     }
 
     public void paymentDone(Long orderId) {
