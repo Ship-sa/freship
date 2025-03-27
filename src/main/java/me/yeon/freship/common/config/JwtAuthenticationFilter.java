@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import me.yeon.freship.common.domain.constant.ErrorCode;
 import me.yeon.freship.common.exception.ClientException;
 import me.yeon.freship.common.exception.ServerException;

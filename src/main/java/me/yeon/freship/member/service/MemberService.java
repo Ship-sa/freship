@@ -1,6 +1,5 @@
 package me.yeon.freship.member.service;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import me.yeon.freship.common.domain.constant.ErrorCode;
 import me.yeon.freship.common.exception.ClientException;
@@ -39,7 +38,7 @@ public class MemberService {
             throw new ClientException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
-        findMember.update(memberUpdateRequest.getEmail(), memberUpdateRequest.getName(), memberUpdateRequest.getPhone(), memberUpdateRequest.getAddress());
+        findMember.updateMember(memberUpdateRequest.getEmail(), memberUpdateRequest.getName(), memberUpdateRequest.getPhone(), memberUpdateRequest.getAddress());
 
         Member savedMember = memberRepository.save(findMember);
 
