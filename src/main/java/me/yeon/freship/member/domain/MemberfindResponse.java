@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
+@Builder
 public class MemberfindResponse {
 
     private final Long id;
@@ -13,7 +14,6 @@ public class MemberfindResponse {
     private final String phone;
     private final String address;
 
-    @Builder
     public MemberfindResponse(Long id, String email, String name, String phone, String address) {
         this.id = id;
         this.email = email;

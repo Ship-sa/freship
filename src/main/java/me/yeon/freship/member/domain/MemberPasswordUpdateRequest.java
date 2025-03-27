@@ -7,6 +7,7 @@ import lombok.Getter;
 @Getter
 public class MemberPasswordUpdateRequest {
 
+    @NotBlank(message = "비밀번호는 필수 값입니다.")
     private String oldPassword;
 
     @NotBlank(message = "비밀번호는 필수 값입니다.")

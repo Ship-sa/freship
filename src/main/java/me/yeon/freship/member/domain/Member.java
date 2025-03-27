@@ -1,8 +1,6 @@
 package me.yeon.freship.member.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import me.yeon.freship.common.domain.BaseEntity;
@@ -49,13 +47,7 @@ public class Member extends BaseEntity {
         this.memberRole = memberRole;
     }
 
-    private Member(Long id, String email, MemberRole memberRole) {
-        this.id = id;
-        this.email = email;
-        this.memberRole = memberRole;
-    }
-
-    public void update(String email, String name, String phone, String address) {
+    public void updateMember(String email, String name, String phone, String address) {
         this.email = email;
         this.name = name;
         this.phone = phone;

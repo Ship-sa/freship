@@ -1,7 +1,5 @@
 package me.yeon.freship.member.infrastructure;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import me.yeon.freship.member.domain.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 
