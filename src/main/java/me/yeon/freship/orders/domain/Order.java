@@ -60,7 +60,7 @@ public class Order extends BaseEntity {
     public static Order newOrder(String orderCode, Member member, Product product, int amount) {
         return new Order(
                 orderCode, OrderStatus.PENDING, product.getName(),
-                amount, product.getPrice() * amount, DELIVERY_FEE,
+                amount, product.getPrice() * amount + DELIVERY_FEE, DELIVERY_FEE,
                 member
         );
     }
