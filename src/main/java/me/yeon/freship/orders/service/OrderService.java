@@ -68,6 +68,8 @@ public class OrderService {
             throw new ClientException(ErrorCode.INVALID_ORDER_STATUS);
         }
 
+        // TODO: product와의 연결을 끊어야 할 수도 있다.
+
         // 재고를 늘리고 상태를 결제 취소로 바꿈.
         order.getProduct().increaseQuantity(order.getOrderCount());
         order.changeStatus(OrderStatus.CANCEL);
@@ -117,13 +119,13 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public Page<CustomerOrderInfo> findAllByCustomer(int pageNum, int pageSize) {
-        Pageable pageRequest = PageRequest.of(pageNum, pageSize);
+        Pageable pageRequest = PageRequest.of(pageNum - 1, pageSize);
         return repository.findAllByCustomer(pageRequest);
     }
 
     @Transactional(readOnly = true)
     public Page<OwnerOrderInfo> findAllByOwner(int pageNum, int pageSize) {
-        Pageable pageRequest = PageRequest.of(pageNum, pageSize);
+        Pageable pageRequest = PageRequest.of(pageNum - 1, pageSize);
         return repository.findAllByOwner(pageRequest);
     }
 
