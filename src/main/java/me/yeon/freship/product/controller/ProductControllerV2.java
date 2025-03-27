@@ -2,10 +2,12 @@ package me.yeon.freship.product.controller;
 
 import lombok.RequiredArgsConstructor;
 import me.yeon.freship.common.domain.Response;
+import me.yeon.freship.member.domain.AuthMember;
 import me.yeon.freship.product.domain.ProductRankResponse;
 import me.yeon.freship.product.domain.ProductReadCountResponse;
 import me.yeon.freship.product.service.ProductService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,8 +24,8 @@ public class ProductControllerV2 {
 
     // 조회수를 캐시에 저장한 일반 단건 상품 조회
     @GetMapping("/{id}")
-    public ResponseEntity<Response<ProductReadCountResponse>> findProductV2(@PathVariable Long id){
-        ProductReadCountResponse response = productService.findProductV2(id);
+    public ResponseEntity<Response<ProductReadCountResponse>> findProductV2(@AuthenticationPrincipal AuthMember authMember, @PathVariable Long id){
+        ProductReadCountResponse response = productService.findProductV2(id, authMember.getId());
         return ResponseEntity.ok().body(Response.of(response));
     }
 

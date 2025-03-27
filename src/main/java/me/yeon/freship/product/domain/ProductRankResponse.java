@@ -20,7 +20,8 @@ public class ProductRankResponse {
     private final String description;
 
     @Builder
-    public ProductRankResponse(Long id, Long rank, String name, Integer quantity, Status status, Category category, Integer price, String imgUrl, String description) {
+    public ProductRankResponse(Long id, Long rank, String name, Integer quantity,
+                               Status status, Category category, Integer price, String imgUrl, String description) {
         this.id = id;
         this.rank = rank;
         this.name = name;

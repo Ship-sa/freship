@@ -43,7 +43,8 @@ public class SecurityConfig{
                 .rememberMe(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(request -> request.getRequestURI().startsWith("/auth")).permitAll()
-                        .anyRequest().authenticated()
+//                        .anyRequest().authenticated()
+                        .anyRequest().permitAll() // 여기 테스트용으로 바꾼거임 복구해야함
                 )
                 .build();
     }

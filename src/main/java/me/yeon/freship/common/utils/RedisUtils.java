@@ -2,11 +2,9 @@ package me.yeon.freship.common.utils;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -18,20 +16,19 @@ public class RedisUtils {
         redisTemplate.opsForZSet().add(key, "product:" + id, 1.0);
     }
 
-    public Double incrementScore(String key, Long id){
-        return redisTemplate.opsForZSet().incrementScore(key, "product:" + id, 1.0);
+    public Double incrementScore(String key, Long productId){
+        return redisTemplate.opsForZSet().incrementScore(key, "product:" + productId, 1.0);
     }
 
     public boolean notExistsKey(String key, Long id){
         Double currentScore = redisTemplate.opsForZSet().score(key, "product:" + id);
-        System.out.println(currentScore == null);
         return currentScore == null;
     }
 
     public List<Long> findTop10ProductId() {
         Set<Object> objectSet = redisTemplate.opsForZSet().reverseRange("product:readCount",0, 9);
         if (objectSet == null) {
-            return Collections.emptyList(); // 빈 Set 반환
+            return Collections.emptyList();
         }
         List<Long> res = new ArrayList<>();
         for (Object o : objectSet) {
@@ -42,15 +39,17 @@ public class RedisUtils {
         return res;
     }
 
+    public Boolean isNotViewed (String key) {
+        Boolean isNotViewed = redisTemplate.opsForValue().setIfAbsent(key, "viewed");
+        return isNotViewed;
+    }
+
     public void clearAtMidnight(){
         redisTemplate.getConnectionFactory().getConnection().flushDb();
     }
 
-    public Long getData(String key){
-        return (Long) redisTemplate.opsForValue().get(key);
+    public Double getScore(String key, Long productId){
+        return redisTemplate.opsForZSet().score(key, "product:" + productId);
     }
 
-    public void deleteData(String key){
-        redisTemplate.delete(key);
-    }
 }
