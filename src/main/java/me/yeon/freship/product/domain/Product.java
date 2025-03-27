@@ -41,7 +41,8 @@ public class Product extends BaseEntity {
 
     private String description;
 
-    public Product(String name, Integer quantity, Status status, Category category, Integer price, String imgUrl, String description) {
+    public Product(String name, Integer quantity, Status status, Category category, Integer price, String imgUrl,
+                   String description) {
         this.name = name;
         this.quantity = quantity;
         this.status = status;
@@ -49,6 +50,14 @@ public class Product extends BaseEntity {
         this.price = price;
         this.imgUrl = imgUrl;
         this.description = description;
+    }
+
+    public void decreaseQuantity(int amount) {
+        this.quantity -= amount;
+    }
+
+    public void increaseQuantity(int amount) {
+        this.quantity -= amount;
     }
 
 }
