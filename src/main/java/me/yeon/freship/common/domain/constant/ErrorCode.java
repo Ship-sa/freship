@@ -28,6 +28,7 @@ public enum ErrorCode {
 
     // Product 에러코드
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-1", "상품이 존재하지 않습니다."),
+    PRODUCT_NAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "PRODUCT-2", "중복된 상품명입니다."),
 
     EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다.");
 
