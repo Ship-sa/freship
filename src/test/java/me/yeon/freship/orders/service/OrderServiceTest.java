@@ -299,8 +299,8 @@ class OrderServiceTest {
             ReflectionTestUtils.setField(order, "id", 1L);
 
             // when
-            when(orderRepository.findById(anyLong())).thenReturn(Optional.of(order));
-            orderService.paymentDone(1L);
+            when(orderRepository.findByOrderCode(anyString())).thenReturn(Optional.of(order));
+            orderService.paymentDone(anyString());
 
             // then
             assertThat(order.getStatus()).isEqualTo(OrderStatus.DELI_PROVISION);
@@ -310,10 +310,10 @@ class OrderServiceTest {
         void 결제_완료_절차_중_Order_를_찾지_못하면_에러를_던진다() {
 
             // given & when
-            when(orderRepository.findById(anyLong())).thenReturn(Optional.empty());
+            when(orderRepository.findByOrderCode(anyString())).thenReturn(Optional.empty());
 
             // then
-            assertThatThrownBy(() -> orderService.paymentDone(anyLong()))
+            assertThatThrownBy(() -> orderService.paymentDone(anyString()))
                     .isInstanceOf(ClientException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NOT_FOUND_ORDER);
@@ -334,10 +334,10 @@ class OrderServiceTest {
             ReflectionTestUtils.setField(order, "id", 1L);
 
             // when
-            when(orderRepository.findById(anyLong())).thenReturn(Optional.of(order));
+            when(orderRepository.findByOrderCode(anyString())).thenReturn(Optional.of(order));
 
             // then
-            assertThatThrownBy(() -> orderService.paymentDone(anyLong()))
+            assertThatThrownBy(() -> orderService.paymentDone(anyString()))
                     .isInstanceOf(ClientException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.INVALID_ORDER_STATUS);
