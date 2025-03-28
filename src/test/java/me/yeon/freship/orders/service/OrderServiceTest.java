@@ -100,7 +100,7 @@ class OrderServiceTest {
                             () -> orderService.create(1L, 2, 1L))
                     .isInstanceOf(ClientException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.EXCEPTION);
+                    .isEqualTo(ErrorCode.NOT_FOUND_MEMBER);
         }
     }
 
@@ -113,7 +113,10 @@ class OrderServiceTest {
             Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
             ReflectionTestUtils.setField(product, "id", 1L);
 
-            Order order = Order.newOrder("newOrderCode", null, product, 4);
+            Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
+            ReflectionTestUtils.setField(member, "id", 1L);
+
+            Order order = Order.newOrder("newOrderCode", member, product, 4);
             ReflectionTestUtils.setField(order, "id", 1L);
 
             // when
@@ -131,7 +134,10 @@ class OrderServiceTest {
             Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
             ReflectionTestUtils.setField(product, "id", 1L);
 
-            Order order = Order.newOrder("newOrderCode", null, product, 4);
+            Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
+            ReflectionTestUtils.setField(member, "id", 1L);
+
+            Order order = Order.newOrder("newOrderCode", member, product, 4);
             order.changeStatus(OrderStatus.DELI_PROGRESS);
             ReflectionTestUtils.setField(order, "id", 1L);
 
@@ -152,7 +158,10 @@ class OrderServiceTest {
             Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
             ReflectionTestUtils.setField(product, "id", 1L);
 
-            Order order = Order.newOrder("newOrderCode", null, product, 4);
+            Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
+            ReflectionTestUtils.setField(member, "id", 1L);
+
+            Order order = Order.newOrder("newOrderCode", member, product, 4);
             order.changeStatus(OrderStatus.DELI_DONE);
             ReflectionTestUtils.setField(order, "id", 1L);
 
@@ -177,7 +186,10 @@ class OrderServiceTest {
             Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
             ReflectionTestUtils.setField(product, "id", 1L);
 
-            Order order = Order.newOrder("newOrderCode", null, product, 4);
+            Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
+            ReflectionTestUtils.setField(member, "id", 1L);
+
+            Order order = Order.newOrder("newOrderCode", member, product, 4);
             order.changeStatus(OrderStatus.DELI_PROVISION);
             ReflectionTestUtils.setField(order, "id", 1L);
 
@@ -203,7 +215,7 @@ class OrderServiceTest {
             assertThatThrownBy(() -> orderService.startDelivery(anyLong()))
                     .isInstanceOf(ClientException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.EXCEPTION);
+                    .isEqualTo(ErrorCode.NOT_FOUND_ORDER);
         }
 
         @Test
@@ -213,7 +225,10 @@ class OrderServiceTest {
             Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
             ReflectionTestUtils.setField(product, "id", 1L);
 
-            Order order = Order.newOrder("newOrderCode", null, product, 4);
+            Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
+            ReflectionTestUtils.setField(member, "id", 1L);
+
+            Order order = Order.newOrder("newOrderCode", member, product, 4);
             ReflectionTestUtils.setField(order, "id", 1L);
 
             // when
@@ -232,7 +247,10 @@ class OrderServiceTest {
             Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
             ReflectionTestUtils.setField(product, "id", 1L);
 
-            Order order = Order.newOrder("newOrderCode", null, product, 4);
+            Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
+            ReflectionTestUtils.setField(member, "id", 1L);
+
+            Order order = Order.newOrder("newOrderCode", member, product, 4);
             order.changeStatus(OrderStatus.PENDING);
             ReflectionTestUtils.setField(order, "id", 1L);
 
@@ -254,7 +272,7 @@ class OrderServiceTest {
             assertThatThrownBy(() -> orderService.paymentDone(anyLong()))
                     .isInstanceOf(ClientException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.EXCEPTION);
+                    .isEqualTo(ErrorCode.NOT_FOUND_ORDER);
         }
 
         @Test
@@ -264,7 +282,10 @@ class OrderServiceTest {
             Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
             ReflectionTestUtils.setField(product, "id", 1L);
 
-            Order order = Order.newOrder("newOrderCode", null, product, 4);
+            Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
+            ReflectionTestUtils.setField(member, "id", 1L);
+
+            Order order = Order.newOrder("newOrderCode", member, product, 4);
             order.changeStatus(OrderStatus.DELI_DONE);
             ReflectionTestUtils.setField(order, "id", 1L);
 
