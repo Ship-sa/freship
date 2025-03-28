@@ -31,8 +31,8 @@ public class ProductControllerV1 {
             @PathVariable Long storeId,
             @Valid @RequestBody ProductRequest request
     ) {
-        Response<ProductResponse> response = productService.saveProduct(authMember, storeId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        ProductResponse response = productService.saveProduct(authMember, storeId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Response.of(response));
     }
 
     @GetMapping
@@ -46,7 +46,8 @@ public class ProductControllerV1 {
 
     @GetMapping("/{id}")
     public ResponseEntity<Response<ProductResponse>> findProductById(@PathVariable Long id) {
-        return ResponseEntity.ok(productService.findProductById(id));
+        ProductResponse response = productService.findProductById(id);
+        return ResponseEntity.ok(Response.of(response));
     }
 
     @PutMapping("/{id}")
@@ -55,7 +56,8 @@ public class ProductControllerV1 {
             @PathVariable Long id,
             @RequestBody ProductRequest request
     ) {
-        return ResponseEntity.ok(productService.updateProduct(authMember, id, request));
+        ProductResponse response = productService.updateProduct(authMember, id, request);
+        return ResponseEntity.ok(Response.of(response));
     }
 
     @DeleteMapping("/{id}")
