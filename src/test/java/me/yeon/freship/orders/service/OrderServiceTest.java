@@ -14,6 +14,7 @@ import me.yeon.freship.product.domain.Category;
 import me.yeon.freship.product.domain.Product;
 import me.yeon.freship.product.domain.Status;
 import me.yeon.freship.product.infrastructure.ProductRepository;
+import me.yeon.freship.store.domain.Store;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -116,13 +117,20 @@ class OrderServiceTest {
             Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
             ReflectionTestUtils.setField(member, "id", 1L);
 
+            Member owner = new Member("email2@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_OWNER);
+            ReflectionTestUtils.setField(member, "id", 2L);
+
+            Store store = new Store(owner, "example store", "bizRegNum", "city district detail");
+            ReflectionTestUtils.setField(store, "id", 1L);
+            ReflectionTestUtils.setField(product, "store", store);
+
             Order order = Order.newOrder("newOrderCode", member, product, 4);
             ReflectionTestUtils.setField(order, "id", 1L);
 
             // when
-            when(orderRepository.findById(anyLong())).thenReturn(Optional.of(order));
-            when(productRepository.findById(anyLong())).thenReturn(Optional.of(product));
-            orderService.cancel(order.getId());
+            when(orderRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(order));
+            when(productRepository.findByIdWithStoreAndOwner(anyLong())).thenReturn(Optional.of(product));
+            orderService.cancel(anyLong(), 2L);
 
             // then
             assertThat(product.getQuantity()).isEqualTo(14);
@@ -143,11 +151,11 @@ class OrderServiceTest {
             ReflectionTestUtils.setField(order, "id", 1L);
 
             // when
-            when(orderRepository.findById(anyLong())).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(order));
 
             // then
             assertThatThrownBy(
-                    () -> orderService.cancel(order.getId()))
+                    () -> orderService.cancel(anyLong(), 1L))
                     .isInstanceOf(ClientException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.INVALID_ORDER_STATUS);
@@ -167,15 +175,47 @@ class OrderServiceTest {
             ReflectionTestUtils.setField(order, "id", 1L);
 
             // when
-            when(orderRepository.findById(anyLong())).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(order));
 
             // then
             assertThatThrownBy(
-                    () -> orderService.cancel(order.getId()))
+                    () -> orderService.cancel(anyLong(), 1L))
                     .isInstanceOf(ClientException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.INVALID_ORDER_STATUS);
         }
+
+        @Test
+        void 자신이_생성하거나_자신의_가게에_들어온_주문이_아니면_에러를_던진다() {
+            // given
+            Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
+            ReflectionTestUtils.setField(product, "id", 1L);
+
+            Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
+            ReflectionTestUtils.setField(member, "id", 1L);
+
+            Member owner = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_OWNER);
+            ReflectionTestUtils.setField(member, "id", 2L);
+
+            Store store = new Store(owner, "example store", "bizRegNum", "city district detail");
+            ReflectionTestUtils.setField(store, "id", 1L);
+            ReflectionTestUtils.setField(product, "store", store);
+
+            Order order = Order.newOrder("newOrderCode", member, product, 4);
+            ReflectionTestUtils.setField(order, "id", 1L);
+
+
+            // when
+            when(orderRepository.findByIdWithMember(anyLong())).thenReturn(Optional.of(order));
+            when(productRepository.findByIdWithStoreAndOwner(anyLong())).thenReturn(Optional.of(product));
+
+            // then
+            assertThatThrownBy(() -> orderService.cancel(anyLong(), 3L))
+                    .isInstanceOf(ClientException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.FORBIDDEN_ORDER_CANCELLATION);
+        }
+
     }
 
     @Nested
@@ -190,6 +230,9 @@ class OrderServiceTest {
             Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
             ReflectionTestUtils.setField(member, "id", 1L);
 
+            Member owner = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
+            ReflectionTestUtils.setField(member, "id", 2L);
+
             Order order = Order.newOrder("newOrderCode", member, product, 4);
             order.changeStatus(OrderStatus.DELI_PROVISION);
             ReflectionTestUtils.setField(order, "id", 1L);
@@ -197,9 +240,9 @@ class OrderServiceTest {
             LocalDateTime currentTime = LocalDateTime.now();
 
             // when
-            when(orderRepository.findById(anyLong())).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdAndOwnerId(anyLong(), anyLong())).thenReturn(Optional.of(order));
             when(clockHolder.currentLocalDateTime()).thenReturn(currentTime);
-            orderService.startDelivery(1L);
+            orderService.startDelivery(anyLong(), anyLong());
 
             // then
             assertThat(order.getShippedAt()).isEqualTo(currentTime);
@@ -210,13 +253,13 @@ class OrderServiceTest {
         void 배송_출발_시도_중_Order_를_찾지_못하면_에러를_던진다() {
 
             // given & when
-            when(orderRepository.findById(anyLong())).thenReturn(Optional.empty());
+            when(orderRepository.findByIdAndOwnerId(anyLong(), anyLong())).thenReturn(Optional.empty());
 
             // then
-            assertThatThrownBy(() -> orderService.startDelivery(anyLong()))
+            assertThatThrownBy(() -> orderService.startDelivery(anyLong(), anyLong()))
                     .isInstanceOf(ClientException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.NOT_FOUND_ORDER);
+                    .isEqualTo(ErrorCode.FORBIDDEN_DELI_START);
         }
 
         @Test
@@ -233,10 +276,10 @@ class OrderServiceTest {
             ReflectionTestUtils.setField(order, "id", 1L);
 
             // when
-            when(orderRepository.findById(anyLong())).thenReturn(Optional.of(order));
+            when(orderRepository.findByIdAndOwnerId(anyLong(), anyLong())).thenReturn(Optional.of(order));
 
             // then
-            assertThatThrownBy(() -> orderService.startDelivery(anyLong()))
+            assertThatThrownBy(() -> orderService.startDelivery(anyLong(), anyLong()))
                     .isInstanceOf(ClientException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.INVALID_REQ_DELIVERY);
