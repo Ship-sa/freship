@@ -28,6 +28,7 @@ public enum ErrorCode {
     FORBIDDEN_ORDER_CANCELLATION(HttpStatus.FORBIDDEN, "ORDER-4", "주문을 취소할 권한이 없습니다."),
     FORBIDDEN_ORDER_VIEW(HttpStatus.FORBIDDEN, "ORDER-5", "주문을 조회할 권한이 없습니다."),
     FORBIDDEN_DELI_START(HttpStatus.FORBIDDEN, "ORDER-6", "배송 상태를 변경할 권한이 없습니다."),
+    LACK_OF_QUANTITY(HttpStatus.BAD_REQUEST, "ORDER-7", "주문 수량이 잔여 수량보다 많습니다."),
 
     // Store 에러코드
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-1", "가게가 존재하지 않습니다."),

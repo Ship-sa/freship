@@ -46,6 +46,10 @@ public class OrderService {
                 .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_MEMBER));
 
         // product의 재고 차감
+        if (product.getQuantity() - orderAmount < 0) {
+            throw new ClientException(ErrorCode.LACK_OF_QUANTITY);
+        }
+
         product.decreaseQuantity(orderAmount);
 
         String orderCode = orderCodeGenerator.create(product.getCategory(), getCurrentDate());
