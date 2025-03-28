@@ -37,6 +37,8 @@ public class Order extends BaseEntity {
 
     private int deliveryFee;
 
+    private String deliveryAddress;
+
     private LocalDateTime shippedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -49,7 +51,7 @@ public class Order extends BaseEntity {
 
     private Order(
             String orderCode, OrderStatus status, String productName,
-            int orderCount, int totalPrice, int deliveryFee, Member member, Product product
+            int orderCount, int totalPrice, int deliveryFee, String deliveryAddress, Member member, Product product
     ) {
         this.orderCode = orderCode;
         this.status = status;
@@ -57,6 +59,7 @@ public class Order extends BaseEntity {
         this.orderCount = orderCount;
         this.totalPrice = totalPrice;
         this.deliveryFee = deliveryFee;
+        this.deliveryAddress = deliveryAddress;
         this.member = member;
         this.product = product;
     }
@@ -66,7 +69,7 @@ public class Order extends BaseEntity {
         return new Order(
                 orderCode, OrderStatus.PENDING, product.getName(),
                 amount, product.getPrice() * amount + DELIVERY_FEE, DELIVERY_FEE,
-                member, product
+                member.getAddress(), member, product
         );
     }
 
