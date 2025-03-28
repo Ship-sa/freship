@@ -31,12 +31,16 @@ public class StoreService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public Response<StoreResponse> saveStore(AuthMember authMember, StoreRequest request) {
+    public StoreResponse saveStore(AuthMember authMember, StoreRequest request) {
         Member member = memberRepository.findById(authMember.getId())
                 .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_MEMBER));
 
         if (member.getMemberRole() != MemberRole.ROLE_OWNER) {
             throw new ClientException(ErrorCode.NOT_OWNER_AUTHORITY);
+        }
+
+        if (storeRepository.existsByBizRegNum(request.getBizRegNum())) {
+            throw new ClientException(ErrorCode.BIZ_REG_NUM_ALREADY_EXISTS);
         }
 
         Store store = new Store(
@@ -47,25 +51,25 @@ public class StoreService {
         );
         storeRepository.save(store);
 
-        return Response.of(StoreResponse.fromEntity(store));
-    }
-
-    @Transactional
-    public Response<List<StoreResponse>> findStores() {
-        return Response.of(storeRepository.findAll().stream()
-                .map(StoreResponse::fromEntity)
-                .collect(Collectors.toList()));
+        return StoreResponse.fromEntity(store);
     }
 
     @Transactional(readOnly = true)
-    public Response<StoreResponse> findStoreById(Long id) {
+    public List<StoreResponse> findStores() {
+        return storeRepository.findAll().stream()
+                .map(StoreResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public StoreResponse findStoreById(Long id) {
         Store store = storeRepository.findById(id)
                 .orElseThrow(() -> new ClientException(ErrorCode.STORE_NOT_FOUND));
-        return Response.of(StoreResponse.fromEntity(store));
+        return StoreResponse.fromEntity(store);
     }
 
     @Transactional
-    public Response<StoreResponse> updateStore(AuthMember authMember, Long id, UpdateStoreRequest request) {
+    public StoreResponse updateStore(AuthMember authMember, Long id, UpdateStoreRequest request) {
         Store store = storeRepository.findById(id)
                 .orElseThrow(() -> new ClientException(ErrorCode.STORE_NOT_FOUND));
 
@@ -74,7 +78,7 @@ public class StoreService {
         }
 
         store.update(request.getName(), request.getAddress());
-        return Response.of(StoreResponse.fromEntity(store));
+        return StoreResponse.fromEntity(store);
     }
 
     @Transactional
