@@ -21,9 +21,6 @@ public enum ErrorCode {
     SAME_AS_OLD_PASSWORD(HttpStatus.NOT_FOUND, "MEMBER-10", "새 비밀번호는 기존 비밀번호와 같을 수 없습니다."),
     NOT_OWNER_AUTHORITY(HttpStatus.UNAUTHORIZED, "MEMBER-11", "사장 권한을 가지고 있지 않습니다."),
 
-    // Payment 에러코드
-    PAY_CONFIRM_FAILED(HttpStatus.BAD_REQUEST, "PAYMENT-1", "결제 승인 처리에 실패했습니다."),
-
     // Order 에러코드
     INVALID_REQ_DELIVERY(HttpStatus.BAD_REQUEST, "ORDER-1", "배송준비 상태에서만 배송을 출발할 수 있습니다."),
     INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST, "ORDER-2", "잘못된 주문 상태 변경 요청입니다."),
