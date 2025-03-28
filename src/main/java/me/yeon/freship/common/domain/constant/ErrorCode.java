@@ -25,9 +25,12 @@ public enum ErrorCode {
     PAY_CONFIRM_FAILED(HttpStatus.BAD_REQUEST, "PAYMENT-1", "결제 승인 처리에 실패했습니다."),
 
     // Order 에러코드
-    INVALID_REQ_DELIVERY(HttpStatus.BAD_REQUEST, "ORDER-1", "잘못된 배송 처리 요청입니다"),
+    INVALID_REQ_DELIVERY(HttpStatus.BAD_REQUEST, "ORDER-1", "배송준비 상태에서만 배송을 출발할 수 있습니다."),
     INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST, "ORDER-2", "잘못된 주문 상태 변경 요청입니다."),
     NOT_FOUND_ORDER(HttpStatus.NOT_FOUND, "ORDER-3", "존재하지 않는 주문입니다."),
+    FORBIDDEN_ORDER_CANCELLATION(HttpStatus.FORBIDDEN, "ORDER-4", "주문을 취소할 권한이 없습니다."),
+    FORBIDDEN_ORDER_VIEW(HttpStatus.FORBIDDEN, "ORDER-5", "주문을 조회할 권한이 없습니다."),
+    FORBIDDEN_DELI_START(HttpStatus.FORBIDDEN, "ORDER-6", "배송 상태를 변경할 권한이 없습니다."),
 
     // Store 에러코드
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-1", "가게가 존재하지 않습니다."),
