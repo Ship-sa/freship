@@ -1,6 +1,5 @@
 package me.yeon.freship.common.config;
 
-import me.yeon.freship.common.domain.Response;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -47,12 +46,12 @@ public class RedisConfig {
                 .defaultCacheConfig()
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
-                        new Jackson2JsonRedisSerializer<>(Response.class)));
+                        new Jackson2JsonRedisSerializer<>(Object.class)));
 
         // 캐시 이름별로 직렬화 방식 지정
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
         cacheConfigurations.put("getRanks", objectCacheConfig);
-        cacheConfigurations.put("popular:search", responseCacheConfig);
+        cacheConfigurations.put("search", responseCacheConfig);
 
         return RedisCacheManager
                 .RedisCacheManagerBuilder
