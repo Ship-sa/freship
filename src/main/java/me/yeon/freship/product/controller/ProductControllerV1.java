@@ -24,7 +24,7 @@ public class ProductControllerV1 {
 
     private final ProductService productService;
 
-    @PostMapping
+    @PostMapping("/{storeId}")
     public ResponseEntity<Response<ProductResponse>> saveProduct(
             @AuthenticationPrincipal AuthMember authMember,
             @PathVariable Long storeId,
@@ -37,10 +37,14 @@ public class ProductControllerV1 {
     @GetMapping
     public ResponseEntity<Response<List<ProductResponse>>> findProducts(
             @RequestParam(value = "category", required = false) Category category,
-            @RequestParam PageInfo pageInfo
+            @RequestParam(value = "pageNum", defaultValue = "0") int pageNum,
+            @RequestParam(value = "pageSize", defaultValue = "10") int pageSize
     ) {
-        Page<ProductResponse> page = productService.findProducts(category, pageInfo);
-        return ResponseEntity.ok(Response.of(page.getContent(), pageInfo));
+        PageInfo page = new PageInfo(pageNum, pageSize, 0, 0);
+        Page<ProductResponse> responsePage = productService.findProducts(category, page);
+        page = PageInfo.of(responsePage, pageNum, pageSize);
+
+        return ResponseEntity.ok(Response.of(responsePage.getContent(), page));
     }
 
     @GetMapping("/{id}")

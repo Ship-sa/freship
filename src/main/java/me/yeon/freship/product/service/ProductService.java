@@ -32,13 +32,17 @@ public class ProductService {
 
     @Transactional
     public ProductResponse saveProduct(AuthMember authMember, Long storeId, ProductRequest request) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new ClientException(ErrorCode.STORE_NOT_FOUND));
+
         Member member = findMemberByAuthMemberId(authMember);
-        if (!member.getId().equals(storeId)) {
+        if (!member.getId().equals(store.getMember().getId())) {
             throw new ClientException(ErrorCode.NOT_STORE_OWNER);
         }
 
-        Store store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new ClientException(ErrorCode.STORE_NOT_FOUND));
+        if (productRepository.existsByStoreAndName(store, request.getName())) {
+            throw new ClientException(ErrorCode.PRODUCT_NAME_ALREADY_EXISTS);
+        }
 
         Product product = new Product(
                 store,
@@ -59,12 +63,9 @@ public class ProductService {
     public Page<ProductResponse> findProducts(Category category, PageInfo pageInfo) {
         Pageable pageable = PageRequest.of(pageInfo.getPageNum(), pageInfo.getPageSize());
 
-        Page<Product> products;
-        if (category == null) {
-            products = productRepository.findAll(pageable);
-        } else {
-            products = productRepository.findByCategory(category, pageable);
-        }
+        Page<Product> products = (category == null)
+                ? productRepository.findAll(pageable)
+                : productRepository.findByCategory(category, pageable);
 
         return products.map(ProductResponse::fromEntity);
     }
