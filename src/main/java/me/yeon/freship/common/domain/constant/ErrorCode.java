@@ -34,6 +34,10 @@ public enum ErrorCode {
     NOT_STORE_OWNER(HttpStatus.FORBIDDEN, "STORE-2", "본인의 가게가 아닙니다."),
     BIZ_REG_NUM_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "STORE-3", "이미 존재하는 사업자등록번호입니다."),
 
+    // Payment 에러코드
+    PAY_CONFIRM_FAILED(HttpStatus.BAD_REQUEST, "PAYMENT-1", "결제 승인 처리에 실패했습니다."),
+    NO_SUCH_ORDER(HttpStatus.BAD_REQUEST, "PAYMENT-2", "존재하지 않는 주문 건입니다."),
+    INVALID_PRICE_CHECKED(HttpStatus.BAD_REQUEST, "PAYMENT-3", "주문서와 결제된 가격이 다릅니다."),
     // Product 에러코드
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-1", "상품이 존재하지 않습니다."),
     PRODUCT_NAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "PRODUCT-2", "중복된 상품명입니다."),

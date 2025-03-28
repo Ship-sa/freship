@@ -3,6 +3,9 @@ package me.yeon.freship.payment.service;
 import lombok.RequiredArgsConstructor;
 import me.yeon.freship.common.domain.constant.ErrorCode;
 import me.yeon.freship.common.exception.ClientException;
+import me.yeon.freship.orders.domain.Order;
+import me.yeon.freship.orders.infrastructure.OrderRepository;
+import me.yeon.freship.orders.service.OrderService;
 import me.yeon.freship.payment.domain.CheckoutResponse;
 import me.yeon.freship.payment.domain.ConfirmResponse;
 import me.yeon.freship.payment.infrastructure.PaymentHistoryRepository;
@@ -10,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
 import java.util.Base64;
@@ -21,25 +25,34 @@ public class PaymentService {
 
     private final RestClient restClient = RestClient.create();
     private final PaymentHistoryRepository paymentHistoryRepository;
+    private final OrderService orderService;
+    private final OrderRepository orderRepository;
 
     @Value("${toss-payments.api-secret-key}")
     private String apiKey;
 
-    public ConfirmResponse confirmPayment(CheckoutResponse checkoutResponse) {
-        // TODO: 넘어온 amount랑 주문서 비교
-        // 에러 상황에서의 처리
+    @Transactional
+    public ConfirmResponse verifyAndSend(CheckoutResponse res) {
 
-        ConfirmResponse confirmResponse = sendConfirmRequest(checkoutResponse);
+        Order order = orderRepository.findByOrderCode(res.getOrderId())
+                .orElseThrow(() -> new ClientException(ErrorCode.NO_SUCH_ORDER));
 
+        // PG에 요청된 금액과 주문서 금액 비교
+        if (order.getTotalPrice() != res.getAmount()) {
+            orderService.cancel(order.getId(), order.getMember().getId());
+            throw new ClientException(ErrorCode.INVALID_PRICE_CHECKED);
+        }
 
-        // 여기서부터 트랜잭션이 될 것임
+        return sendConfirmRequest(res);
+    }
+
+    @Transactional
+    public ConfirmResponse confirmPayment(ConfirmResponse confirmResponse) {
         // 결제 정보 저장
         paymentHistoryRepository.save(confirmResponse.toSuccessHistory(1L));
-
         // 주문 정보 저장
-
-        // 재고 차감
-
+        orderService.paymentDone(confirmResponse.getOrderId());
+        
         return confirmResponse;
     }
 
@@ -58,4 +71,5 @@ public class PaymentService {
                 .body(ConfirmResponse.class);
         return confirmResponse;
     }
+
 }
