@@ -2,6 +2,7 @@ package me.yeon.freship.common.utils;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -12,44 +13,56 @@ import java.util.*;
 public class RedisUtils {
     private final RedisTemplate<String, Object> redisTemplate;
 
-    public void setScore(String key, Long id){
-        redisTemplate.opsForZSet().add(key, "product:" + id, 1.0);
+    public void setReadCount(Long id){
+        redisTemplate.opsForZSet().add("product:readCount", "product:" + id, 1);
     }
 
-    public Long incrementScore(String key, Long productId){
-        return redisTemplate.opsForZSet().incrementScore(key, "product:" + productId, 1.0).longValue();
+    public Long getReadCount(Long productId){
+        return redisTemplate.opsForZSet().score("product:readCount", "product:" + productId).longValue();
     }
 
-    public boolean notExistsKey(String key, Long id){
-        Double currentScore = redisTemplate.opsForZSet().score(key, "product:" + id);
-        return currentScore == null;
+    public Long addReadCount(Long productId){
+        return redisTemplate.opsForZSet().incrementScore("product:readCount", "product:" + productId, 1).longValue();
     }
 
-    public List<Long> findTop10ProductId() {
+    public boolean notExistsReadCount(Long productId){
+        // 값이 존재하지 않는다면 null 반환
+        Double currentReadCount = redisTemplate.opsForZSet().score("product:readCount", "product:" + productId);
+        return currentReadCount == null;
+    }
+
+    // 조회수 상위 10개의 상품 id 리스트 조회
+    public List<Long> findProductIds() {
         Set<Object> objectSet = redisTemplate.opsForZSet().reverseRange("product:readCount",0, 9);
         if (objectSet == null) {
             return Collections.emptyList();
         }
-        List<Long> res = new ArrayList<>();
+
+        //"product:7" -> ["product", "7"] -> ["7"]로 변환
+        List<Long> productIdList = new ArrayList<>();
         for (Object o : objectSet) {
             String value = (String) o;
-            String[] parts = value.split(":"); // "product:7" -> ["product", "7"]
-            res.add(Long.parseLong(parts[1])); // 숫자 부분만 추가
+            String[] parts = value.split(":");
+            productIdList.add(Long.parseLong(parts[1]));
         }
-        return res;
+        return productIdList;
     }
 
-    public Boolean isNotViewed (String key) {
-        Boolean isNotViewed = redisTemplate.opsForValue().setIfAbsent(key, "viewed");
+    public Boolean isNotViewed (Long productId, Long userId) {
+        Boolean isNotViewed = redisTemplate.opsForValue().setIfAbsent("product:" + productId + ":user:" + userId, "viewed");
         return isNotViewed;
     }
 
-    public void clear(){
-        redisTemplate.getConnectionFactory().getConnection().flushDb();
-    }
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void clearCache(){
+        Set<String> visitorKeys = redisTemplate.keys("product*");
+        if (visitorKeys != null && !visitorKeys.isEmpty()) {
+            redisTemplate.delete(visitorKeys);
+        }
 
-    public Long getScore(String key, Long productId){
-        return redisTemplate.opsForZSet().score(key, "product:" + productId).longValue();
+        if (Boolean.TRUE.equals(redisTemplate.hasKey("product:readCount"))) {
+            redisTemplate.opsForZSet().removeRange("product:readCount", 0, -1);
+        }
     }
 
 }

@@ -52,7 +52,7 @@ public class RedisConfig {
 
         // 캐시 이름별로 직렬화 방식 지정
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
-        cacheConfigurations.put("getRanks", objectCacheConfig);
+        cacheConfigurations.put("rank", objectCacheConfig);
         cacheConfigurations.put("responseCache", responseCacheConfig);
 
         return RedisCacheManager

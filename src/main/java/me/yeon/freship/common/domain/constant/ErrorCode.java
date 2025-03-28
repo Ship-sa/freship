@@ -26,6 +26,10 @@ public enum ErrorCode {
     NOT_STORE_OWNER(HttpStatus.FORBIDDEN, "STORE-2", "본인의 가게가 아닙니다."),
     BIZ_REG_NUM_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "STORE-3", "이미 존재하는 사업자등록번호입니다."),
 
+    // Product 에러코드
+    PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-1", "상품이 존재하지 않습니다."),
+    PRODUCT_NAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "PRODUCT-2", "중복된 상품명입니다."),
+
     EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다.");
 
     private final HttpStatus status;

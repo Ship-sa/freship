@@ -20,7 +20,8 @@ public class ProductReadCountResponse {
     private final String description;
 
     @Builder
-    public ProductReadCountResponse(Long id, Long readCount, String name, Integer quantity, Status status, Category category, Integer price, String imgUrl, String description) {
+    public ProductReadCountResponse(Long id, Long readCount, String name, Integer quantity, Status status,
+                                    Category category, Integer price, String imgUrl, String description) {
         this.id = id;
         this.readCount = readCount;
         this.name = name;

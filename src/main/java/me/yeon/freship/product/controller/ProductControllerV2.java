@@ -22,18 +22,19 @@ public class ProductControllerV2 {
 
     private final ProductService productService;
 
-    // 조회수를 캐시에 저장한 일반 단건 상품 조회
+    // 캐시에 조회수를 저장한 단건 상품 조회
     @GetMapping("/{id}")
-    public ResponseEntity<Response<ProductReadCountResponse>> findProductV2(@AuthenticationPrincipal AuthMember authMember, @PathVariable Long id){
-        ProductReadCountResponse response = productService.findProductV2(id, authMember.getId());
-        return ResponseEntity.ok().body(Response.of(response));
+    public ResponseEntity<Response<ProductReadCountResponse>> findProductWithReadCount(@AuthenticationPrincipal AuthMember authMember,
+                                                                                       @PathVariable Long id){
+        ProductReadCountResponse product = productService.findProductWithReadCount(id, authMember.getId());
+        return ResponseEntity.ok().body(Response.of(product));
     }
 
-    // 조회수 기준 상위 10개의 상품 리스트 조회하기
-    @GetMapping("/rank")
-    public ResponseEntity<Response<List<ProductRankResponse>>> findProductV3(){
-        List<ProductRankResponse> productReadCountResponses = productService.findTop10ProductId();
-        return ResponseEntity.ok().body(Response.of(productReadCountResponses));
+    // 조회수 기준 상위 10개의 상품 리스트 조회
+    @GetMapping("/ranking/read-count")
+    public ResponseEntity<Response<List<ProductRankResponse>>> findProductsByReadCount(){
+        List<ProductRankResponse> products = productService.findProductsByReadCount();
+        return ResponseEntity.ok().body(Response.of(products));
     }
 
 }

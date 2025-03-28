@@ -49,7 +49,7 @@ class ProductServiceTest {
         when(productService.findReadCount(productId, userId)).thenReturn(10L);
 
         // when
-        ProductReadCountResponse response = productService.findProductV2(productId, userId);
+        ProductReadCountResponse response = productService.findProductWithReadCount(productId, userId);
 
         // then
         assertThat(response).isNotNull();
@@ -70,10 +70,10 @@ class ProductServiceTest {
         Long productId = 1L;
         String setKey = "product:readCount";
 
-        when(redisUtils.notExistsKey(setKey, productId)).thenReturn(true);
+        when(redisUtils.notExistsReadCount(productId)).thenReturn(true);
 
         // when
-        Long readCount = productService.addReadCount(productId, setKey);
+        Long readCount = productService.addReadCount(productId);
 
         // then
         assertThat(readCount).isNotNull();
@@ -86,13 +86,13 @@ class ProductServiceTest {
         Long productId = 1L;
         String setKey = "product:readCount";
 
-        redisUtils.setScore(setKey, productId);
-        Long readCount = redisUtils.getScore(setKey, productId);
-        when(redisUtils.notExistsKey(setKey, productId)).thenReturn(false);
-        when(redisUtils.incrementScore(setKey, productId)).thenReturn(readCount + 1L);
+        redisUtils.setReadCount(productId);
+        Long readCount = redisUtils.getReadCount(productId);
+        when(redisUtils.notExistsReadCount(productId)).thenReturn(false);
+        when(redisUtils.addReadCount(productId)).thenReturn(readCount + 1L);
 
         // when
-        Long addedReadCount = productService.addReadCount(productId, setKey);
+        Long addedReadCount = productService.addReadCount(productId);
 
         // then
         assertThat(addedReadCount).isEqualTo(readCount + 1L);
@@ -103,11 +103,9 @@ class ProductServiceTest {
         // given
         Long productId = 1L;
         Long userId = 1L;
-        String setKey = "product:readCount";
-        String checkKey = "product:viewed:" + productId + ":" + userId;
 
-        when(redisUtils.isNotViewed(checkKey)).thenReturn(true);
-        when(redisUtils.notExistsKey(setKey, productId)).thenReturn(true);
+        when(redisUtils.isNotViewed(productId, userId)).thenReturn(true);
+        when(redisUtils.notExistsReadCount(productId)).thenReturn(true);
 
         // when
         Long addedCount = productService.findReadCount(productId, userId);
@@ -145,11 +143,11 @@ class ProductServiceTest {
         products.add(rank5product);
 
 
-        when(redisUtils.findTop10ProductId()).thenReturn(topProductIds);
+        when(redisUtils.findProductIds()).thenReturn(topProductIds);
         when(productRepository.findProductsByRank(topProductIds)).thenReturn(products);
 
         // when
-        List<ProductRankResponse> result = productService.findTop10ProductId();
+        List<ProductRankResponse> result = productService.findProductsByReadCount();
 
         // then
         assertThat(result).isNotNull();
