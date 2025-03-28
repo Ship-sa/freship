@@ -23,7 +23,7 @@ public class Store extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String bizRegNum;
 
     @Column(nullable = false)

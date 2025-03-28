@@ -29,18 +29,20 @@ public class StoreController {
             @AuthenticationPrincipal AuthMember authMember,
             @Valid @RequestBody StoreRequest request
     ) {
-        Response<StoreResponse> response = storeService.saveStore(authMember, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        StoreResponse response = storeService.saveStore(authMember, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Response.of(response));
     }
 
     @GetMapping
     public ResponseEntity<Response<List<StoreResponse>>> findStores() {
-        return ResponseEntity.ok(storeService.findStores());
+        List<StoreResponse> response = storeService.findStores();
+        return ResponseEntity.ok(Response.of(response));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Response<StoreResponse>> findStoreById(@PathVariable Long id) {
-        return ResponseEntity.ok(storeService.findStoreById(id));
+        StoreResponse response = storeService.findStoreById(id);
+        return ResponseEntity.ok(Response.of(response));
     }
 
     @PutMapping("/{id}")
@@ -49,7 +51,8 @@ public class StoreController {
             @PathVariable Long id,
             @RequestBody UpdateStoreRequest request
     ) {
-        return ResponseEntity.ok(storeService.updateStore(authMember, id, request));
+        StoreResponse response = storeService.updateStore(authMember, id, request);
+        return ResponseEntity.ok(Response.of(response));
     }
 
     @DeleteMapping("/{id}")
