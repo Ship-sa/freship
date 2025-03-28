@@ -43,9 +43,8 @@ public class OrderService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
 
-        // TODO: ErrorCode 변경
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
+                .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_MEMBER));
 
         // product의 재고 차감
         product.decreaseQuantity(orderAmount);
@@ -59,9 +58,8 @@ public class OrderService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void cancel(Long orderId) {
-        // TODO: ErrorCode 변경
         Order order = repository.findByIdWithProduct(orderId)
-                .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
+                .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_ORDER));
 
         // 주문의 상태가 배송 시작, 배송 완료일 때에는 취소할 수 없음.
         if (order.getStatus() == OrderStatus.DELI_PROGRESS || order.getStatus() == OrderStatus.DELI_DONE) {
@@ -76,9 +74,8 @@ public class OrderService {
     }
 
     public void startDelivery(Long orderId) {
-        // TODO: ErrorCode 변경
         Order order = repository.findById(orderId)
-                .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
+                .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_ORDER));
 
         // '상품 준비중' 상태에서만 배송 시작 가능
         if (order.getStatus() != OrderStatus.DELI_PROVISION) {
@@ -89,9 +86,8 @@ public class OrderService {
     }
 
     public void paymentDone(Long orderId) {
-        // TODO: ErrorCode 변경
         Order order = repository.findById(orderId)
-                .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
+                .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_ORDER));
 
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new ClientException(ErrorCode.INVALID_ORDER_STATUS);
@@ -102,17 +98,15 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public CustomerOrderInfo findOneByCustomer(Long orderId) {
-        // TODO: ErrorCode 변경
         Order order = repository.findById(orderId)
-                .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
+                .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_ORDER));
         return CustomerOrderInfo.fromOrder(order);
     }
 
     @Transactional(readOnly = true)
     public OwnerOrderInfo findOneByOwner(Long orderId) {
-        // TODO: ErrorCode 변경
         Order order = repository.findById(orderId)
-                .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
+                .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_ORDER));
 
         return OwnerOrderInfo.fromOrder(order);
     }
