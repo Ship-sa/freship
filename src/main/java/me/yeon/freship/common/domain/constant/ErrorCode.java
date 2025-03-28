@@ -27,6 +27,7 @@ public enum ErrorCode {
     // Order 에러코드
     INVALID_REQ_DELIVERY(HttpStatus.BAD_REQUEST, "ORDER-1", "잘못된 배송 처리 요청입니다"),
     INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST, "ORDER-2", "잘못된 주문 상태 변경 요청입니다."),
+    NOT_FOUND_ORDER(HttpStatus.NOT_FOUND, "ORDER-3", "존재하지 않는 주문입니다."),
 
     // Store 에러코드
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-1", "가게가 존재하지 않습니다."),
