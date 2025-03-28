@@ -18,6 +18,7 @@ public class OwnerOrderInfo {
     private String orderCode;
     private OrderStatus status;
     private String productName;
+    private String deliveryAddress;
     private int amount;
     private int totalPrice;
     private int deliveryFee;
@@ -37,6 +38,7 @@ public class OwnerOrderInfo {
                 order.getOrderCode(),
                 order.getStatus(),
                 order.getProductName(),
+                order.getDeliveryAddress(),
                 order.getOrderCount(),
                 order.getTotalPrice(),
                 order.getDeliveryFee(),
