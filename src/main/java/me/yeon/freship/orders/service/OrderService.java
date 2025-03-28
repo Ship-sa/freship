@@ -70,7 +70,7 @@ public class OrderService {
                 .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
 
         // 자신과 관련된 주문만 변경할 수 있음
-        if (!memberId.equals(order.getMember().getId()) && memberId.equals(product.getStore().getMember().getId())) {
+        if (!memberId.equals(order.getMember().getId()) && !memberId.equals(product.getStore().getMember().getId())) {
             throw new ClientException(ErrorCode.FORBIDDEN_ORDER_CANCELLATION);
         }
 
