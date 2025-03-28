@@ -84,6 +84,6 @@ public class ProductService {
     // 자정마다 모든 조회수 삭제
     @Scheduled(cron = "0 0 0 * * ?")
     public void clearRedisAtMidnight() {
-        redisUtils.clearAtMidnight();
+        redisUtils.clear();
     }
 }

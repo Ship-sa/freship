@@ -44,7 +44,7 @@ public class RedisUtils {
         return isNotViewed;
     }
 
-    public void clearAtMidnight(){
+    public void clear(){
         redisTemplate.getConnectionFactory().getConnection().flushDb();
     }
 
