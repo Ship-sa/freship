@@ -19,7 +19,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -56,9 +55,8 @@ public class OrderService {
                 .getId();
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void cancel(Long orderId) {
-        Order order = repository.findByIdWithProduct(orderId)
+        Order order = repository.findById(orderId)
                 .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_ORDER));
 
         // 주문의 상태가 배송 시작, 배송 완료일 때에는 취소할 수 없음.
@@ -66,10 +64,12 @@ public class OrderService {
             throw new ClientException(ErrorCode.INVALID_ORDER_STATUS);
         }
 
-        // TODO: product와의 연결을 끊어야 할 수도 있다.
+        // TODO: ErrorCode 변경
+        Product product = productRepository.findById(order.getId())
+                .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
 
         // 재고를 늘리고 상태를 결제 취소로 바꿈.
-        order.getProduct().increaseQuantity(order.getOrderCount());
+        product.increaseQuantity(order.getOrderCount());
         order.changeStatus(OrderStatus.CANCEL);
     }
 

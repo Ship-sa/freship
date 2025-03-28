@@ -21,6 +21,8 @@ public class Order extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long productId;
+
     @Column(length = 11)
     private String orderCode;
 
@@ -45,14 +47,11 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "member_id")
     private Member member;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id")
-    private Product product;
-
     private Order(
-            String orderCode, OrderStatus status, String productName,
-            int orderCount, int totalPrice, int deliveryFee, String deliveryAddress, Member member, Product product
+            Long productId, String orderCode, OrderStatus status, String productName,
+            int orderCount, int totalPrice, int deliveryFee, String deliveryAddress, Member member
     ) {
+        this.productId = productId;
         this.orderCode = orderCode;
         this.status = status;
         this.productName = productName;
@@ -61,15 +60,14 @@ public class Order extends BaseEntity {
         this.deliveryFee = deliveryFee;
         this.deliveryAddress = deliveryAddress;
         this.member = member;
-        this.product = product;
     }
 
     // 주문서 생성
     public static Order newOrder(String orderCode, Member member, Product product, int amount) {
         return new Order(
-                orderCode, OrderStatus.PENDING, product.getName(),
+                product.getId(), orderCode, OrderStatus.PENDING, product.getName(),
                 amount, product.getPrice() * amount + DELIVERY_FEE, DELIVERY_FEE,
-                member.getAddress(), member, product
+                member.getAddress(), member
         );
     }
 
