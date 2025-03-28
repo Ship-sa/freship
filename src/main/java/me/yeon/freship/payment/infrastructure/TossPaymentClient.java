@@ -1,28 +1,28 @@
 package me.yeon.freship.payment.infrastructure;
 
+import lombok.RequiredArgsConstructor;
+import me.yeon.freship.orders.domain.Order;
+import me.yeon.freship.orders.infrastructure.OrderRepository;
 import me.yeon.freship.payment.domain.CheckoutRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import java.util.UUID;
-
 @Controller
+@RequiredArgsConstructor
 public class TossPaymentClient {
+
+    private final OrderRepository orderRepository;
+
 
     @GetMapping("/payment/checkout")
     public String widget(Model model) {
 
-        model.addAttribute(
-                "payRequest",
-                CheckoutRequest.builder()
-                        .customerId(1L)
-                        .orderNum(UUID.randomUUID().toString())
-                        .customerEmail("example@example.com")
-                        .customerName("example")
-                        .itemName("투수 티셔츠")
-                        .priceToPay(60000)
-                        .build());
+        Order order = orderRepository.findByIdWithMember(1L)
+                .orElseThrow();
+
+        CheckoutRequest request = CheckoutRequest.fromOrder(order);
+        model.addAttribute("payRequest", request);
 
         return "payment/checkout";
     }

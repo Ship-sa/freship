@@ -36,6 +36,8 @@ public enum ErrorCode {
 
     // Payment 에러코드
     PAY_CONFIRM_FAILED(HttpStatus.BAD_REQUEST, "PAYMENT-1", "결제 승인 처리에 실패했습니다."),
+    NO_SUCH_ORDER(HttpStatus.BAD_REQUEST, "PAYMENT-2", "존재하지 않는 주문 건입니다."),
+    INVALID_PRICE_CHECKED(HttpStatus.BAD_REQUEST, "PAYMENT-3", "주문서와 결제된 가격이 다릅니다."),
 
     EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다.");
 

@@ -11,4 +11,8 @@ public interface OrderRepository extends JpaRepository<Order, Long>, OrderReposi
 
     @Query("select o from Order o join fetch o.member where o.id = :orderId")
     Optional<Order> findByIdWithMember(@Param("orderId") Long id);
+
+    @Query("select o from Order o join fetch o.member where o.orderCode=:orderCode")
+    Optional<Order> findByOrderCode(@Param("orderCode") String orderCode);
+
 }
