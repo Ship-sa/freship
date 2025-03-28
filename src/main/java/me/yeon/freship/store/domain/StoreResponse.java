@@ -13,6 +13,7 @@ public class StoreResponse {
     private final String name;
     private final String bizRegNum;
     private final String address;
+    private final String memberName;
 
     public static StoreResponse fromEntity(Store store) {
         return StoreResponse.builder()
@@ -20,6 +21,7 @@ public class StoreResponse {
                 .name(store.getName())
                 .bizRegNum(store.getBizRegNum())
                 .address(store.getAddress())
+                .memberName(store.getMember().getName())
                 .build();
     }
 }
