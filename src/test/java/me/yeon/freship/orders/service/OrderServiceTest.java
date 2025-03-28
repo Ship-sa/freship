@@ -120,11 +120,12 @@ class OrderServiceTest {
             ReflectionTestUtils.setField(order, "id", 1L);
 
             // when
-            when(orderRepository.findByIdWithProduct(anyLong())).thenReturn(Optional.of(order));
+            when(orderRepository.findById(anyLong())).thenReturn(Optional.of(order));
+            when(productRepository.findById(anyLong())).thenReturn(Optional.of(product));
             orderService.cancel(order.getId());
 
             // then
-            assertThat(order.getProduct().getQuantity()).isEqualTo(14);
+            assertThat(product.getQuantity()).isEqualTo(14);
             assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCEL);
         }
 
@@ -142,7 +143,7 @@ class OrderServiceTest {
             ReflectionTestUtils.setField(order, "id", 1L);
 
             // when
-            when(orderRepository.findByIdWithProduct(anyLong())).thenReturn(Optional.of(order));
+            when(orderRepository.findById(anyLong())).thenReturn(Optional.of(order));
 
             // then
             assertThatThrownBy(
@@ -166,7 +167,7 @@ class OrderServiceTest {
             ReflectionTestUtils.setField(order, "id", 1L);
 
             // when
-            when(orderRepository.findByIdWithProduct(anyLong())).thenReturn(Optional.of(order));
+            when(orderRepository.findById(anyLong())).thenReturn(Optional.of(order));
 
             // then
             assertThatThrownBy(
