@@ -16,8 +16,8 @@ public class RedisUtils {
         redisTemplate.opsForZSet().add(key, "product:" + id, 1.0);
     }
 
-    public Double incrementScore(String key, Long productId){
-        return redisTemplate.opsForZSet().incrementScore(key, "product:" + productId, 1.0);
+    public Long incrementScore(String key, Long productId){
+        return redisTemplate.opsForZSet().incrementScore(key, "product:" + productId, 1.0).longValue();
     }
 
     public boolean notExistsKey(String key, Long id){
@@ -48,8 +48,8 @@ public class RedisUtils {
         redisTemplate.getConnectionFactory().getConnection().flushDb();
     }
 
-    public Double getScore(String key, Long productId){
-        return redisTemplate.opsForZSet().score(key, "product:" + productId);
+    public Long getScore(String key, Long productId){
+        return redisTemplate.opsForZSet().score(key, "product:" + productId).longValue();
     }
 
 }

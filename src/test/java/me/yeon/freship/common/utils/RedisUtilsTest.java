@@ -143,11 +143,11 @@ public class RedisUtilsTest {
         redisUtils.setScore(setKey, productId);
 
         // when
-        Double readCount = redisUtils.getScore(setKey, productId);
+        Long readCount = redisUtils.getScore(setKey, productId);
 
         // then
         assertThat(readCount).isNotNull();
-        assertThat(readCount).isEqualTo(1.0);
+        assertThat(readCount).isEqualTo(1L);
     }
 
 }

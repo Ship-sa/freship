@@ -43,7 +43,7 @@ public class ProductService {
         return productReadCountResponse;
     }
 
-    // 어뷰징 검증, 24시간 이내에 방문했다면 기존 조회수 조회, 아니라면 조회 1 증가
+    // 어뷰징 검증, 24시간 이내에 방문했다면 기존 조회수 조회, 아니라면 조회수 1 증가
     public Long findReadCount(Long productId, Long userId) {
         String checkKey = "product:viewed:" + productId + ":" + userId;
         String setKey = "product:readCount";
@@ -51,7 +51,7 @@ public class ProductService {
         if (Boolean.TRUE.equals(isNotViewed)) {
             return addReadCount(productId, setKey);
         }
-        return redisUtils.getScore(setKey, productId).longValue();
+        return redisUtils.getScore(setKey, productId);
     }
 
     // Redis를 이용하여 조회수 증가
@@ -60,7 +60,7 @@ public class ProductService {
             redisUtils.setScore(setKey, productId);
             return 1L;
         }
-        return redisUtils.incrementScore(setKey, productId).longValue();
+        return redisUtils.incrementScore(setKey, productId);
     }
 
     // 조회수 기준 상위 10개의 상품 리스트 조회하기
