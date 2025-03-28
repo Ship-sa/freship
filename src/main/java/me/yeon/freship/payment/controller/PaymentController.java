@@ -24,8 +24,11 @@ public class PaymentController {
 
     @GetMapping("/success")
     public ResponseEntity<Response<ConfirmResponse>> confirm(@ModelAttribute CheckoutResponse checkoutResponse) {
+
+        ConfirmResponse confirmResponse = paymentService.verifyAndSend(checkoutResponse);
+
         return ResponseEntity.ok(
-                Response.of(paymentService.confirmPayment(checkoutResponse))
+                Response.of(paymentService.confirmPayment(confirmResponse))
         );
     }
 
@@ -38,4 +41,6 @@ public class PaymentController {
                 .status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(Response.of(checkoutFailResponse));
     }
+
+
 }
