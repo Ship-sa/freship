@@ -31,7 +31,7 @@ public class ProductService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public Response<ProductResponse> saveProduct(AuthMember authMember, Long storeId, ProductRequest request) {
+    public ProductResponse saveProduct(AuthMember authMember, Long storeId, ProductRequest request) {
         Member member = findMemberByAuthMemberId(authMember);
         if (!member.getId().equals(storeId)) {
             throw new ClientException(ErrorCode.NOT_STORE_OWNER);
@@ -52,10 +52,10 @@ public class ProductService {
         );
         productRepository.save(product);
 
-        return Response.of(ProductResponse.fromEntity(product));
+        return ProductResponse.fromEntity(product);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<ProductResponse> findProducts(Category category, PageInfo pageInfo) {
         Pageable pageable = PageRequest.of(pageInfo.getPageNum(), pageInfo.getPageSize());
 
@@ -70,15 +70,15 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Response<ProductResponse> findProductById(Long id) {
+    public ProductResponse findProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        return Response.of(ProductResponse.fromEntity(product));
+        return ProductResponse.fromEntity(product);
     }
 
     @Transactional
-    public Response<ProductResponse> updateProduct(AuthMember authMember, Long id, ProductRequest request) {
+    public ProductResponse updateProduct(AuthMember authMember, Long id, ProductRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_NOT_FOUND));
 
@@ -97,7 +97,7 @@ public class ProductService {
                 request.getDescription()
         );
 
-        return Response.of(ProductResponse.fromEntity(product));
+        return ProductResponse.fromEntity(product);
     }
 
     @Transactional
