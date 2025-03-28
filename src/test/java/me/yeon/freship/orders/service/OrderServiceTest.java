@@ -103,6 +103,27 @@ class OrderServiceTest {
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NOT_FOUND_MEMBER);
         }
+
+        @Test
+        void 재고보다_많은_수량을_주문하면_에러를_던진다() {
+            // given
+            Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
+            ReflectionTestUtils.setField(product, "id", 1L);
+
+            Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
+            ReflectionTestUtils.setField(member, "id", 1L);
+
+            // when
+            when(productRepository.findById(anyLong())).thenReturn(Optional.of(product));
+            when(memberRepository.findById(anyLong())).thenReturn(Optional.of(member));
+
+            // then
+            assertThatThrownBy(() -> orderService.create(1L, 11, 1L))
+                    .isInstanceOf(ClientException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.LACK_OF_QUANTITY);
+
+        }
     }
 
     @Nested
