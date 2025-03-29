@@ -2,7 +2,6 @@ package me.yeon.freship.product.service;
 
 import lombok.RequiredArgsConstructor;
 import me.yeon.freship.common.domain.PageInfo;
-import me.yeon.freship.common.domain.Response;
 import me.yeon.freship.common.domain.constant.ErrorCode;
 import me.yeon.freship.common.exception.ClientException;
 import me.yeon.freship.member.domain.AuthMember;
@@ -23,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -35,6 +35,7 @@ public class ProductService {
     private final StoreRepository storeRepository;
     private final MemberRepository memberRepository;
     private final RedisUtils redisUtils;
+    private final ImgService imgService;
 
     @Transactional
     public ProductResponse saveProduct(AuthMember authMember, Long storeId, ProductRequest request) {
@@ -57,12 +58,26 @@ public class ProductService {
                 request.getStatus(),
                 request.getCategory(),
                 request.getPrice(),
-                request.getImgUrl(),
                 request.getDescription()
         );
         productRepository.save(product);
 
         return ProductResponse.fromEntity(product);
+    }
+
+    @Transactional
+    public String uploadProductImage(AuthMember authMember, Long id, MultipartFile imgFile) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_NOT_FOUND));
+
+        Member member = findMemberByAuthMemberId(authMember);
+        if (!member.getId().equals(product.getStore().getMember().getId())) {
+            throw new ClientException(ErrorCode.NOT_STORE_OWNER);
+        }
+
+        String imgUrl = imgService.saveFile(imgFile);
+        product.updateImageUrl(imgUrl);
+        return imgUrl;
     }
 
     public Page<ProductResponse> findProducts(Category category, PageInfo pageInfo) {
@@ -98,7 +113,6 @@ public class ProductService {
                 request.getStatus(),
                 request.getCategory(),
                 request.getPrice(),
-                request.getImgUrl(),
                 request.getDescription()
         );
 
@@ -114,6 +128,11 @@ public class ProductService {
 
         if (!member.getId().equals(product.getStore().getMember().getId())) {
             throw new ClientException(ErrorCode.NOT_STORE_OWNER);
+        }
+
+        if (product.getImgUrl() != null) {
+            String fileName = product.getImgUrl().substring(product.getImgUrl().lastIndexOf("/") + 1);
+            imgService.deleteImage(fileName);
         }
 
         productRepository.delete(product);
