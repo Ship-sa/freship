@@ -29,6 +29,9 @@ public enum ErrorCode {
     // Product 에러코드
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-1", "상품이 존재하지 않습니다."),
     PRODUCT_NAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "PRODUCT-2", "중복된 상품명입니다."),
+    IMAGE_UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "PRODUCT-3", "이미지 업로드에 실패했습니다."),
+    IMAGE_FILE_EMPTY(HttpStatus.BAD_REQUEST, "PRODUCT-4", "이미지 파일이 없습니다."),
+    IMAGE_DELETE_FAILED(HttpStatus.BAD_REQUEST, "PRODUCT-5", "이미지 삭제에 실패했습니다."),
 
     EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다.");
 

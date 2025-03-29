@@ -9,12 +9,14 @@ import me.yeon.freship.product.domain.Category;
 import me.yeon.freship.product.domain.ProductRequest;
 import me.yeon.freship.product.domain.ProductResponse;
 import me.yeon.freship.product.domain.ProductSearchResponse;
+import me.yeon.freship.product.service.ImgService;
 import me.yeon.freship.product.service.ProductService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -24,6 +26,7 @@ import java.util.List;
 public class ProductControllerV1 {
 
     private final ProductService productService;
+    private final ImgService imgService;
 
     @PostMapping("/{storeId}")
     public ResponseEntity<Response<ProductResponse>> saveProduct(
@@ -33,6 +36,16 @@ public class ProductControllerV1 {
     ) {
         ProductResponse response = productService.saveProduct(authMember, storeId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(Response.of(response));
+    }
+
+    @PostMapping("/{id}/image")
+    public ResponseEntity<Response<String>> uploadImage(
+            @AuthenticationPrincipal AuthMember authMember,
+            @PathVariable Long id,
+            @RequestParam("imgFile") MultipartFile imgFile
+    ) {
+        String imgUrl = productService.uploadProductImage(authMember, id, imgFile);
+        return ResponseEntity.ok(Response.of(imgUrl));
     }
 
     @GetMapping
