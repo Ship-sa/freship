@@ -41,25 +41,27 @@ public class Product extends BaseEntity {
 
     private String description;
 
-    public Product(Store store, String name, Integer quantity, Status status, Category category, Integer price, String imgUrl, String description) {
+    public Product(Store store, String name, Integer quantity, Status status, Category category, Integer price, String description) {
         this.store = store;
         this.name = name;
         this.quantity = quantity;
         this.status = status;
         this.category = category;
         this.price = price;
-        this.imgUrl = imgUrl;
         this.description = description;
     }
 
-    public void update(String name, Integer quantity, Status status, Category category, Integer price, String imgUrl, String description) {
+    public void update(String name, Integer quantity, Status status, Category category, Integer price, String description) {
         if (name != null) this.name = name;
         if (quantity != null && quantity >= 0) this.quantity = quantity;
         if (status != null) this.status = status;
         if (category != null) this.category = category;
         if (price != null && price >= 0) this.price = price;
-        if (imgUrl != null) this.imgUrl = imgUrl;
         if (description != null) this.description = description;
+    }
+
+    public void updateImageUrl(String imgUrl) {
+        this.imgUrl = imgUrl;
     }
 
 }
