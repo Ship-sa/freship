@@ -37,7 +37,6 @@ public class OrderService {
     private final MemberRepository memberRepository;
     private final RedisLockRepository redisLockRepository;
 
-    // TODO: 동시성 제어 필요
     @Transactional
     public Long create(Long memberId, int orderAmount, Long productId) throws InterruptedException {
         while (!redisLockRepository.lock(productId.toString())) {
@@ -45,9 +44,8 @@ public class OrderService {
         }
 
         try {
-            // TODO: ErrorCode 변경
             Product product = productRepository.findById(productId)
-                    .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
+                    .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_NOT_FOUND));
             // product의 재고 차감
             if (product.getQuantity() - orderAmount < 0) {
                 throw new ClientException(ErrorCode.LACK_OF_QUANTITY);
@@ -76,9 +74,8 @@ public class OrderService {
             throw new ClientException(ErrorCode.INVALID_ORDER_STATUS);
         }
 
-        // TODO: ErrorCode 변경
         Product product = productRepository.findByIdWithStoreAndOwner(order.getId())
-                .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
+                .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_NOT_FOUND));
 
         // 자신과 관련된 주문만 변경할 수 있음
         if (!memberId.equals(order.getMember().getId()) && !memberId.equals(product.getStore().getMember().getId())) {
