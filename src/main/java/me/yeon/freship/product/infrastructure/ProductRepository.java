@@ -19,6 +19,9 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
 
     boolean existsByStoreAndName(Store store, String name);
 
+    @Query("SELECT p FROM Product p WHERE p.name LIKE %:name%")
+    Page<Product> searchByName(Pageable pageable, @Param("name") String name);
+
     @Query("select p from Product p join fetch p.store s join s.member where p.id=:productId")
     Optional<Product> findByIdWithStoreAndOwner(@Param("productId") Long id);
 
