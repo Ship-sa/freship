@@ -39,7 +39,7 @@ public class RedisConfig {
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
                         new Jackson2JsonRedisSerializer<>(Object.class)))
-                .entryTtl(Duration.ofMinutes(1L));
+                .entryTtl(Duration.ofMinutes(30L));
 
         // 응답 타입 Response 직렬화
         RedisCacheConfiguration responseCacheConfig = RedisCacheConfiguration
