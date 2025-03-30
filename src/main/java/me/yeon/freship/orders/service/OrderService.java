@@ -82,8 +82,6 @@ public class OrderService {
         product.increaseQuantity(order.getOrderCount());
         order.changeStatus(OrderStatus.CANCEL);
 
-        // TODO: 결제 취소 요청
-
         return order.getId();
     }
 
