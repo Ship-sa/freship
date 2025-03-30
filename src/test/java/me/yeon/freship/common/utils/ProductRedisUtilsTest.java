@@ -1,5 +1,6 @@
 package me.yeon.freship.common.utils;
 
+import me.yeon.freship.product.service.ProductRedisUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,13 +11,12 @@ import java.util.List;
 
 import static java.lang.Boolean.TRUE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-public class RedisUtilsTest {
+public class ProductRedisUtilsTest {
 
     @Autowired
-    private RedisUtils redisUtils;
+    private ProductRedisUtils productRedisUtils;
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
@@ -33,7 +33,7 @@ public class RedisUtilsTest {
         Long productId = 1L;
 
         // when
-        redisUtils.setReadCount(productId);
+        productRedisUtils.setReadCount(productId);
 
         // then
         Double score = redisTemplate.opsForZSet().score(setKey, "product:" + productId);
@@ -46,10 +46,10 @@ public class RedisUtilsTest {
         // given
         String setKey = "product:readCount";
         Long productId = 1L;
-        redisUtils.setReadCount(productId);
+        productRedisUtils.setReadCount(productId);
 
         // when
-        redisUtils.addReadCount(productId);
+        productRedisUtils.addReadCount(productId);
 
         // then
         Double score = redisTemplate.opsForZSet().score(setKey, "product:" + productId);
@@ -63,7 +63,7 @@ public class RedisUtilsTest {
         Long productId = 1L;
 
         // when
-        Boolean isNotExist = redisUtils.notExistsReadCount(productId);
+        Boolean isNotExist = productRedisUtils.notExistsReadCount(productId);
 
         // then
         assertThat(isNotExist).isNotNull();
@@ -77,16 +77,16 @@ public class RedisUtilsTest {
         Long top1readCountId = 9L;
         Long top2readCountId = 0L;
         for (Long i = 0L; i < 20; i++) {
-            redisUtils.setReadCount(i);
+            productRedisUtils.setReadCount(i);
         }
         for (Long i = 0L; i < 10; i++) {
             for (Long j = 0L; j <= i; j++) {
-                redisUtils.addReadCount(i);
+                productRedisUtils.addReadCount(i);
             }
         }
 
         // when
-        List<Long> productIdList = redisUtils.findProductIds();
+        List<Long> productIdList = productRedisUtils.findProductIds();
 
         // then
         assertThat(productIdList).isNotNull();
@@ -97,7 +97,7 @@ public class RedisUtilsTest {
     @Test
     public void 조회수_상위_10개의_상품ID가_Redis에_존재하지_않으면_emptyList를_반환한다() {
         // given & when
-        List<Long> productIdList = redisUtils.findProductIds();
+        List<Long> productIdList = productRedisUtils.findProductIds();
 
         // then
         assertThat(productIdList).isNotNull();
@@ -111,7 +111,7 @@ public class RedisUtilsTest {
         Long userId = 1L;
 
         // when
-        Boolean isNotViewed = redisUtils.isNotViewed(productId, userId);
+        Boolean isNotViewed = productRedisUtils.isNotViewed(productId, userId);
 
         // then
         assertThat(isNotViewed).isNotNull();
@@ -123,10 +123,10 @@ public class RedisUtilsTest {
         // given
         String setKey = "product:readCount";
         Long productId = 1L;
-        redisUtils.setReadCount(productId);
+        productRedisUtils.setReadCount(productId);
 
         // when
-        redisUtils.clearCache();
+        productRedisUtils.clearCache();
         Double score = redisTemplate.opsForZSet().score(setKey, "product:" + productId);
 
         // then
@@ -138,10 +138,10 @@ public class RedisUtilsTest {
         // given
         String setKey = "product:readCount";
         Long productId = 1L;
-        redisUtils.setReadCount(productId);
+        productRedisUtils.setReadCount(productId);
 
         // when
-        Long readCount = redisUtils.getReadCount(productId);
+        Long readCount = productRedisUtils.getReadCount(productId);
 
         // then
         assertThat(readCount).isNotNull();

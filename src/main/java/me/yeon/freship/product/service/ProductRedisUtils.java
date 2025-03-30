@@ -1,4 +1,4 @@
-package me.yeon.freship.common.utils;
+package me.yeon.freship.product.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class RedisUtils {
+public class ProductRedisUtils {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
