@@ -163,12 +163,8 @@ public class ProductService {
         productRedisUtils.saveSearchHistory(userId, productName);
 
         Page<Product> productPage = getProductPage(productName, pageNum, pageSize);
-        PageInfo pageInfo = getPageInfo(productName, pageNum, pageSize);
 
-        return productPage.getContent()
-                .stream()
-                .map(product -> ProductSearchResponse.fromEntity(product, pageInfo))
-                .toList();
+        return productPage.getContent().stream().map(ProductSearchResponse::fromEntity).toList();
     }
 
     // 캐시에 조회수를 저장한 단건 상품 조회
@@ -222,17 +218,6 @@ public class ProductService {
 
         List<ProductRankResponse> readCountResponses = ProductRankResponse.toProductRankResponseList(products);
         return readCountResponses;
-    }
-
-    private PageInfo getPageInfo(String productName, int pageNum, int pageSize) {
-        Page<Product> productPage = getProductPage(productName, pageNum, pageSize);
-
-        return PageInfo.builder()
-                .pageNum(pageNum)
-                .pageSize(pageSize)
-                .totalElement(productPage.getTotalElements())
-                .totalPage(productPage.getTotalPages())
-                .build();
     }
 
     private Page<Product> getProductPage(String productName, int pageNum, int pageSize) {
