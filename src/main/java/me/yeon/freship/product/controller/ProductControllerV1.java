@@ -14,6 +14,8 @@ import me.yeon.freship.product.domain.ProductSearchResponse;
 import me.yeon.freship.product.service.ImgService;
 import me.yeon.freship.product.service.ProductService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -93,13 +95,18 @@ public class ProductControllerV1 {
 
     @GetMapping("/search")
     public ResponseEntity<Response<List<ProductSearchResponse>>> searchProductsWithoutCache(
-            @RequestParam(defaultValue = "1") int pageNum,
-            @RequestParam(defaultValue = "10") int pageSize,
+            @ModelAttribute PageCond pc,
             @RequestParam String name,
             @AuthenticationPrincipal AuthMember authMember
     ) {
-        List<ProductSearchResponse> products = productService.searchProductsWithoutCache(name, pageNum, pageSize, authMember.getId());
-        return ResponseEntity.ok().body(Response.of(products));
+        List<ProductSearchResponse> productList = productService.searchProductsWithoutCache(name, pc.getPageNum(), pc.getPageSize(), authMember.getId());
+        Page<ProductSearchResponse> productPage = new PageImpl<>(productList, PageRequest.of(pc.getPageNum() - 1, pc.getPageSize()), productList.size());
+        PageInfo pageInfo = PageInfo.builder()
+                .pageNum(pc.getPageNum())
+                .pageSize(pc.getPageSize())
+                .totalElement(productPage.getTotalElements())
+                .totalPage(productPage.getTotalPages())
+                .build();
+        return ResponseEntity.ok().body(Response.of(productList, pageInfo));
     }
-
 }
