@@ -6,7 +6,6 @@ import me.yeon.freship.common.domain.constant.ErrorCode;
 import me.yeon.freship.common.exception.ClientException;
 import me.yeon.freship.member.domain.AuthMember;
 import me.yeon.freship.member.domain.Member;
-import me.yeon.freship.common.utils.RedisUtils;
 import me.yeon.freship.member.infrastructure.MemberRepository;
 import me.yeon.freship.product.domain.Product;
 import me.yeon.freship.product.domain.ProductRankResponse;
@@ -29,8 +28,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Comparator;
 import java.util.List;
 
-import static me.yeon.freship.common.domain.constant.ErrorCode.PRODUCT_NOT_FOUND;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -39,7 +36,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final StoreRepository storeRepository;
     private final MemberRepository memberRepository;
-    private final RedisUtils redisUtils;
+    private final ProductRedisUtils productRedisUtils;
     private final ImgService imgService;
 
     @Transactional
@@ -156,14 +153,14 @@ public class ProductService {
 
     // 인기 검색어 조회
     public List<String> findProductsByPopularSearch() {
-        return redisUtils.getTopSearchKeywords();
+        return productRedisUtils.getTopSearchKeywords();
     }
 
     private List<ProductSearchResponse> searchProducts(String productName, int pageNum, int pageSize, Long userId) {
 
         memberRepository.findById(userId).orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_MEMBER));
 
-        redisUtils.saveSearchHistory(userId, productName);
+        productRedisUtils.saveSearchHistory(userId, productName);
 
         Page<Product> productPage = getProductPage(productName, pageNum, pageSize);
         PageInfo pageInfo = getPageInfo(productName, pageNum, pageSize);
@@ -197,27 +194,27 @@ public class ProductService {
 
     // 어뷰징 검증, 24시간 이내에 방문했다면 기존 조회수 조회, 아니라면 조회수 증가
     public Long findReadCount(Long productId, Long userId) {
-        Boolean isNotViewed = redisUtils.isNotViewed(productId, userId);
+        Boolean isNotViewed = productRedisUtils.isNotViewed(productId, userId);
         if (Boolean.TRUE.equals(isNotViewed)) {
             return addReadCount(productId);
         }
-        return redisUtils.getReadCount(productId);
+        return productRedisUtils.getReadCount(productId);
     }
 
     // 조회수가 없는 경우엔 1로 초기화, 존재하는 경우엔 조회수를 1만큼 증가
     public Long addReadCount(Long productId) {
-        if (redisUtils.notExistsReadCount(productId)){
-            redisUtils.setReadCount(productId);
+        if (productRedisUtils.notExistsReadCount(productId)){
+            productRedisUtils.setReadCount(productId);
             return 1L;
         }
-        return redisUtils.addReadCount(productId);
+        return productRedisUtils.addReadCount(productId);
     }
 
     // 조회수 기준 상위 10개의 상품 리스트 조회하기
     @Transactional(readOnly = true)
     @Cacheable(cacheNames = "rank", key = "'products:rank'", cacheManager = "productCacheManager")
     public List<ProductRankResponse> findProductsByReadCount() {
-        List<Long> idList = redisUtils.findProductIds();
+        List<Long> idList = productRedisUtils.findProductIds();
         List<Product> products = productRepository.findProductsByRank(idList);
 
         // 순위별로 정렬

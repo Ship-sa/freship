@@ -1,13 +1,14 @@
 package me.yeon.freship.product.service;
 
-import me.yeon.freship.common.utils.RedisUtils;
 import me.yeon.freship.member.domain.Member;
+import me.yeon.freship.member.domain.MemberRole;
 import me.yeon.freship.member.infrastructure.MemberRepository;
 import me.yeon.freship.product.domain.Product;
 import me.yeon.freship.product.domain.ProductRankResponse;
 import me.yeon.freship.product.domain.ProductReadCountResponse;
 import me.yeon.freship.product.domain.ProductSearchResponse;
 import me.yeon.freship.product.infrastructure.ProductRepository;
+import me.yeon.freship.store.domain.Store;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,7 +45,7 @@ public class ProductServiceTest {
     private MemberRepository memberRepository;
 
     @Mock
-    private RedisUtils redisUtils;
+    private ProductRedisUtils productRedisUtils;
 
     @InjectMocks
     private ProductService productService;
@@ -61,7 +62,7 @@ public class ProductServiceTest {
         Page<Product> productPage = new PageImpl<>(productList, pageable, productList.size());
 
         given(memberRepository.findById(anyLong())).willReturn(Optional.of(mock(Member.class)));
-        willDoNothing().given(redisUtils).saveSearchHistory(anyLong(), anyString());
+        willDoNothing().given(productRedisUtils).saveSearchHistory(anyLong(), anyString());
         given(productRepository.searchByName(any(Pageable.class), eq(name))).willReturn(productPage);
 
         // when
@@ -84,7 +85,7 @@ public class ProductServiceTest {
         Page<Product> productPage = new PageImpl<>(productList, pageable, productList.size());
 
         given(memberRepository.findById(anyLong())).willReturn(Optional.of(mock(Member.class)));
-        willDoNothing().given(redisUtils).saveSearchHistory(anyLong(), anyString());
+        willDoNothing().given(productRedisUtils).saveSearchHistory(anyLong(), anyString());
         given(productRepository.searchByName(any(Pageable.class), eq(name))).willReturn(productPage);
 
         // when
@@ -99,7 +100,7 @@ public class ProductServiceTest {
     void 인기_검색어_조회() {
         List<String> popularSearch = List.of("1위", "2위");
 
-        given(redisUtils.getTopSearchKeywords()).willReturn(popularSearch);
+        given(productRedisUtils.getTopSearchKeywords()).willReturn(popularSearch);
 
         List<String> result = productService.findProductsByPopularSearch();
 
@@ -113,8 +114,10 @@ public class ProductServiceTest {
         Long productId = 1L;
         Long userId = 1L;
 
-        Product product = new Product("포카칩", 5, ON_SALE, SNACKS, 3000,
-                "https://example.com/images/포카칩.jpg", "바삭바삭 맛이 좋은 감자칩입니다");
+        Member member = new Member("test@example.com", "password123", "홍길동", "010-1234-5678", "서울시 강남구", MemberRole.ROLE_MEMBER);
+        Store store = new Store(member, "GS25", "123-45-67890", "서울시 강남구 역삼동");
+
+        Product product = new Product(store, "포카칩", 5, ON_SALE, SNACKS, 3000, "바삭바삭 맛이 좋은 감자칩입니다");
         ReflectionTestUtils.setField(product, "id", productId);
         when(productRepository.findById(productId)).thenReturn(Optional.of(product));
         when(productService.findReadCount(productId, userId)).thenReturn(10L);
@@ -141,7 +144,7 @@ public class ProductServiceTest {
         Long productId = 1L;
         String setKey = "product:readCount";
 
-        when(redisUtils.notExistsReadCount(productId)).thenReturn(true);
+        when(productRedisUtils.notExistsReadCount(productId)).thenReturn(true);
 
         // when
         Long readCount = productService.addReadCount(productId);
@@ -157,10 +160,10 @@ public class ProductServiceTest {
         Long productId = 1L;
         String setKey = "product:readCount";
 
-        redisUtils.setReadCount(productId);
-        Long readCount = redisUtils.getReadCount(productId);
-        when(redisUtils.notExistsReadCount(productId)).thenReturn(false);
-        when(redisUtils.addReadCount(productId)).thenReturn(readCount + 1L);
+        productRedisUtils.setReadCount(productId);
+        Long readCount = productRedisUtils.getReadCount(productId);
+        when(productRedisUtils.notExistsReadCount(productId)).thenReturn(false);
+        when(productRedisUtils.addReadCount(productId)).thenReturn(readCount + 1L);
 
         // when
         Long addedReadCount = productService.addReadCount(productId);
@@ -175,8 +178,8 @@ public class ProductServiceTest {
         Long productId = 1L;
         Long userId = 1L;
 
-        when(redisUtils.isNotViewed(productId, userId)).thenReturn(true);
-        when(redisUtils.notExistsReadCount(productId)).thenReturn(true);
+        when(productRedisUtils.isNotViewed(productId, userId)).thenReturn(true);
+        when(productRedisUtils.notExistsReadCount(productId)).thenReturn(true);
 
         // when
         Long addedCount = productService.findReadCount(productId, userId);
@@ -190,21 +193,18 @@ public class ProductServiceTest {
     public void 조회수_기준_상위_10개의_상품_리스트를_순위를_포함하여_조회한다() {
         // given
         List<Long> topProductIds = List.of(10L, 5L, 20L, 15L, 1L);
+        Member member = new Member("test@example.com", "password123", "홍길동", "010-1234-5678", "서울시 강남구", MemberRole.ROLE_MEMBER);
+        Store store = new Store(member, "GS25", "123-45-67890", "서울시 강남구 역삼동");
 
-        Product rank1product = new Product("포카칩", 5, ON_SALE, SNACKS, 3000,
-                "https://example.com/images/포카칩.jpg", "바삭바삭 맛이 좋은 감자칩입니다");
+        Product rank1product = new Product(store, "포카칩", 5, ON_SALE, SNACKS, 3000, "바삭바삭 맛이 좋은 감자칩입니다");
         ReflectionTestUtils.setField(rank1product, "id", 10L);
-        Product rank2product = new Product("수미칩", 5, ON_SALE, SNACKS, 3000,
-                "https://example.com/images/수미칩.jpg", "향과 맛이 좋은 감자칩입니다");
+        Product rank2product = new Product(store, "수미칩", 5, ON_SALE, SNACKS, 3000, "향과 맛이 좋은 감자칩입니다");
         ReflectionTestUtils.setField(rank2product, "id", 5L);
-        Product rank3product = new Product("새우칩", 5, ON_SALE, SNACKS, 3000,
-                "https://example.com/images/새우칩.jpg", "짭짤한 맛이 좋은 새우칩입니다");
+        Product rank3product = new Product(store, "새우칩", 5, ON_SALE, SNACKS, 3000, "짭짤한 맛이 좋은 새우칩입니다");
         ReflectionTestUtils.setField(rank3product, "id", 20L);
-        Product rank4product = new Product("사과칩", 5, ON_SALE, SNACKS, 3000,
-                "https://example.com/images/사과칩.jpg", "달달한 맛이 좋은 사과칩입니다");
+        Product rank4product = new Product(store, "사과칩", 5, ON_SALE, SNACKS, 3000, "달달한 맛이 좋은 사과칩입니다");
         ReflectionTestUtils.setField(rank4product, "id", 15L);
-        Product rank5product = new Product("키위칩", 5, ON_SALE, SNACKS, 3000,
-                "https://example.com/images/키위칩.jpg", "향긋한 맛이 좋은 키위칩입니다");
+        Product rank5product = new Product(store, "키위칩", 5, ON_SALE, SNACKS, 3000, "향긋한 맛이 좋은 키위칩입니다");
         ReflectionTestUtils.setField(rank5product, "id", 1L);
         List<Product> products = new ArrayList<>();
         products.add(rank1product);
@@ -214,7 +214,7 @@ public class ProductServiceTest {
         products.add(rank5product);
 
 
-        when(redisUtils.findProductIds()).thenReturn(topProductIds);
+        when(productRedisUtils.findProductIds()).thenReturn(topProductIds);
         when(productRepository.findProductsByRank(topProductIds)).thenReturn(products);
 
         // when
