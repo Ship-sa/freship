@@ -2,9 +2,11 @@ package me.yeon.freship.product.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import me.yeon.freship.common.domain.PageCond;
 import me.yeon.freship.common.domain.PageInfo;
 import me.yeon.freship.common.domain.Response;
 import me.yeon.freship.member.domain.AuthMember;
+import me.yeon.freship.orders.domain.CustomerOrderInfo;
 import me.yeon.freship.product.domain.Category;
 import me.yeon.freship.product.domain.ProductRequest;
 import me.yeon.freship.product.domain.ProductResponse;
@@ -51,14 +53,17 @@ public class ProductControllerV1 {
     @GetMapping
     public ResponseEntity<Response<List<ProductResponse>>> findProducts(
             @RequestParam(value = "category", required = false) Category category,
-            @RequestParam(value = "pageNum", defaultValue = "0") int pageNum,
-            @RequestParam(value = "pageSize", defaultValue = "10") int pageSize
+            @ModelAttribute PageCond pc
     ) {
-        PageInfo page = new PageInfo(pageNum, pageSize, 0, 0);
-        Page<ProductResponse> responsePage = productService.findProducts(category, page);
-        page = PageInfo.of(responsePage, pageNum, pageSize);
+        Page<ProductResponse> resultPage = productService.findProducts(category, pc.getPageNum(), pc.getPageSize());
+        PageInfo pageInfo = PageInfo.builder()
+                .pageNum(pc.getPageNum())
+                .pageSize(pc.getPageSize())
+                .totalElement(resultPage.getTotalElements())
+                .totalPage(resultPage.getTotalPages())
+                .build();
 
-        return ResponseEntity.ok(Response.of(responsePage.getContent(), page));
+        return ResponseEntity.ok(Response.of(resultPage.getContent(), pageInfo));
     }
 
     @GetMapping("/{id}")
