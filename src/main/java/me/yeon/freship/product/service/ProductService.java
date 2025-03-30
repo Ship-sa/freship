@@ -177,7 +177,7 @@ public class ProductService {
     // 캐시에 조회수를 저장한 단건 상품 조회
     @Transactional
     public ProductReadCountResponse findProductWithReadCount(Long id, Long userId) {
-        Product product = productRepository.findById(id).orElseThrow(() -> new ClientException(PRODUCT_NOT_FOUND));
+        Product product = productRepository.findById(id).orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_NOT_FOUND));
         Long readCount = findReadCount(product.getId(), userId);
         ProductReadCountResponse productReadCountResponse =
                 ProductReadCountResponse.builder()
