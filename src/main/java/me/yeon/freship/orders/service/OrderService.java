@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.yeon.freship.common.domain.constant.ErrorCode;
 import me.yeon.freship.common.exception.ClientException;
 import me.yeon.freship.common.infrastructure.ClockHolder;
+import me.yeon.freship.common.infrastructure.RedisLockRepository;
 import me.yeon.freship.member.domain.Member;
 import me.yeon.freship.member.infrastructure.MemberRepository;
 import me.yeon.freship.orders.domain.CustomerOrderInfo;
@@ -34,29 +35,35 @@ public class OrderService {
     private final OrderRepository repository;
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
+    private final RedisLockRepository redisLockRepository;
 
     // TODO: 동시성 제어 필요
     @Transactional
-    public Long create(Long memberId, int orderAmount, Long productId) {
-        // TODO: ErrorCode 변경
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
-
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_MEMBER));
-
-        // product의 재고 차감
-        if (product.getQuantity() - orderAmount < 0) {
-            throw new ClientException(ErrorCode.LACK_OF_QUANTITY);
+    public Long create(Long memberId, int orderAmount, Long productId) throws InterruptedException {
+        while (!redisLockRepository.lock(productId.toString())) {
+            Thread.sleep(5000);
         }
 
-        product.decreaseQuantity(orderAmount);
+        try {
+            // TODO: ErrorCode 변경
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new ClientException(ErrorCode.EXCEPTION));
+            // product의 재고 차감
+            if (product.getQuantity() - orderAmount < 0) {
+                throw new ClientException(ErrorCode.LACK_OF_QUANTITY);
+            }
+            String orderCode = orderCodeGenerator.create(product.getCategory(), getCurrentDate());
 
-        String orderCode = orderCodeGenerator.create(product.getCategory(), getCurrentDate());
+            Member member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_MEMBER));
+            product.decreaseQuantity(orderAmount);
 
-        return repository
-                .save(Order.newOrder(orderCode, member, product, orderAmount))
-                .getId();
+            return repository
+                    .save(Order.newOrder(orderCode, member, product, orderAmount))
+                    .getId();
+        } finally {
+            redisLockRepository.unlock(productId.toString());
+        }
     }
 
     @Transactional

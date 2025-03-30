@@ -22,7 +22,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
     @Query("SELECT p FROM Product p WHERE p.name LIKE %:name%")
     Page<Product> searchByName(Pageable pageable, @Param("name") String name);
 
-    @Query("select p from Product p join fetch p.store s join s.member where p.id=:productId")
+    @Query("SELECT p from Product p JOIN FETCH p.store s JOIN FETCH s.member WHERE p.id=:productId")
     Optional<Product> findByIdWithStoreAndOwner(@Param("productId") Long id);
 
     @Query("SELECT p FROM Product p WHERE p.id in :productIds")
