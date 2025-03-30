@@ -23,7 +23,7 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping("/orders")
-    public ResponseEntity<Response<Void>> create(@RequestBody CreateRequest req) {
+    public ResponseEntity<Response<Void>> create(@RequestBody CreateRequest req) throws InterruptedException {
 
         Long orderId = orderService.create(req.getMemberId(), req.getOrderAmount(), req.getProductId());
         return ResponseEntity.created(URI.create("/orders/" + orderId)).build();
