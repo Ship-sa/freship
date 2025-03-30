@@ -5,7 +5,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.domain.Page;
 
 @Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -24,12 +23,4 @@ public class PageInfo {
         this.totalPage = totalPage;
     }
 
-    public static PageInfo of(Page<?> page, int pageNum, int pageSize) {
-        return PageInfo.builder()
-                .pageNum(pageNum > 0 ? pageNum - 1 : 0)
-                .pageSize(pageSize)
-                .totalElement(page.getTotalElements())
-                .totalPage(page.getTotalPages())
-                .build();
-    }
 }

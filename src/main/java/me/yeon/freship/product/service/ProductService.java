@@ -82,12 +82,12 @@ public class ProductService {
         return imgUrl;
     }
 
-    public Page<ProductResponse> findProducts(Category category, PageInfo pageInfo) {
-        Pageable pageable = PageRequest.of(pageInfo.getPageNum(), pageInfo.getPageSize());
+    public Page<ProductResponse> findProducts(Category category, int pageNum, int pageSize) {
+        Pageable pageRequest = PageRequest.of(pageNum - 1, pageSize);
 
         Page<Product> products = (category == null)
-                ? productRepository.findAll(pageable)
-                : productRepository.findByCategory(category, pageable);
+                ? productRepository.findAll(pageRequest)
+                : productRepository.findByCategory(category, pageRequest);
 
         return products.map(ProductResponse::fromEntity);
     }
