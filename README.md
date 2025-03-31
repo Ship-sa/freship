@@ -158,15 +158,135 @@
 <br/><br/>
 
 **구현**
+<br/>
+
 <details>
-  <summary>결제 프로세스</summary>
+  <summary>분산락을 통한 동시성 제어</summary>
   
+<br/>
+
+- lock : key는 상품 id, value는 클라이언트 uuid로 지정하여 락 획득
+- unlock: Lua script를 활용하여 value의 uuid를 체크하고 delete하는 작업을 atomic하게 수행
+
+```java
+public class RedisOrderLockRepository {
+
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisScript<Boolean> checkAndReleaseLockScript;
+
+    private static final String LOCK_PREFIX = "LOCK:";
+    private static final long TIME_TO_LIVE = 300;
+
+    public Boolean lock(String key, String requestUuid) {
+        return redisTemplate
+                .opsForValue()
+                .setIfAbsent(createKey(key), requestUuid, Duration.ofMillis(TIME_TO_LIVE));
+    }
+
+    // lua script 활용
+    public Boolean unlock(String key, String uuid) {
+        return redisTemplate.execute(
+                checkAndReleaseLockScript,
+                List.of(key),
+                uuid
+        );
+    }
+
+    private String createKey(String key) {
+        return LOCK_PREFIX + key;
+    }
+}
+```
+<br/><br/>
+
+- key에 대한 값을 가져와서 value를 비교함
+- 해당 클라이언트가 현재 락을 획득했는지 검증하는 로직
+
+```lua
+if redis.call('GET', KEYS[1]) == ARGV[1]
+then
+    redis.call("DEL", KEYS[1])
+    return true
+end
+return false
+```
+
+<br/><br/>
+
+- ThreadLocal에 UUID, 락 획득 대기 시간 저장하여 관리
+- 최대 대기 시간을 초과하면 Exception을 던짐
+
+```java
+public Long create(Long memberId, int orderAmount, Long productId) throws InterruptedException {
+        requestId.set(UUID.randomUUID().toString());
+        while (!redisOrderLockRepository.lock(productId.toString(), requestId.get())) {
+            Long accRetryTime = this.accRetryTime.get();
+
+            if (accRetryTime > RETRY_LIMIT_MILLIS) {
+                throw new ServerException(ErrorCode.ORDER_OUT_OF_RETRY);
+            }
+            Thread.sleep(UNIT_OF_RETRY_MILLIS);
+            this.accRetryTime.set(accRetryTime + UNIT_OF_RETRY_MILLIS);
+        }
+
+        try {
+            // ... 락이 필요한 로직
+        } finally {
+            redisOrderLockRepository.unlock(productId.toString(), requestId.get());
+
+            // thread local 초기화
+            requestId.remove();
+            accRetryTime.set(0L);
+        }
+```
+
 </details>
 
 <br/><br/>
 
-**성능테스트**
+**테스트**
 <br/>
+
+- 재고가 10,000개인 상품에 대해 2개씩 구매하는 주문 요청
+- vUser 1000명이 동시에 요청
+- 정상적인 결과는 5,000개의 요청이 성공하는 경우
+
+<br/>
+
+<details>
+  <summary>아무 조치 취하지 않은 경우</summary>
+  <br/>
+  
+  - 총 38,963개의 요청이 성공함
+  - 동시성 문제 발생으로 인한 초과 주문
+  
+  <img width="40%" alt="아무것도x" src="https://github.com/user-attachments/assets/812450be-eab2-4f91-bb27-e1b6dfa3913a" />
+</details>
+
+<details>
+  <summary>DB Lock</summary>
+  <br/>
+  
+  - Optimistic / Pessimistic 각각 3,269개, 5,000개의 요청 성공함 
+  - Optimistic Lock의 경우는, `ObjectLockingFailureException` 발생으로 인해 원래보다 적게 실행됨을 확인
+  - Pessimistic Lock은 정상적으로 동작함을 확인
+
+| <img width="350" alt="optimistic" src="https://github.com/user-attachments/assets/91fb8017-d82c-4899-847c-8f3dcc2462b9" />|<img width="350" alt="pessimistic lock" src="https://github.com/user-attachments/assets/11743b71-4879-4be5-a357-98a3d4f7e596" />|
+|---|---|
+| Optimistic Lock | Pessimistic Lock |
+</details>
+
+<details>
+  <summary>Distributed Lock</summary>
+  <br/>
+  
+  - 현재 Throughput이 매우 적게 나오는 문제 있어 100개로 재고를 줄여 진행함
+  - Race Condition는 없이 데이터가 처리됨
+
+<img width="40%" alt="스크린샷 2025-03-31 14 15 05" src="https://github.com/user-attachments/assets/28a73fa9-9e9f-45f6-af55-b67268f00a83" />
+
+</details>
+
 
 <br/><br/>
 
