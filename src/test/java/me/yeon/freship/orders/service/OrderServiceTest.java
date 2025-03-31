@@ -3,6 +3,7 @@ package me.yeon.freship.orders.service;
 import me.yeon.freship.common.domain.constant.ErrorCode;
 import me.yeon.freship.common.exception.ClientException;
 import me.yeon.freship.common.infrastructure.ClockHolder;
+import me.yeon.freship.common.infrastructure.RedisLockRepository;
 import me.yeon.freship.member.domain.Member;
 import me.yeon.freship.member.domain.MemberRole;
 import me.yeon.freship.member.infrastructure.MemberRepository;
@@ -44,23 +45,32 @@ class OrderServiceTest {
     @Mock private ProductRepository productRepository;
     @Mock private MemberRepository memberRepository;
 
+    @Mock private RedisLockRepository redisLockRepository;
+
     @InjectMocks private OrderService orderService;
 
     @Nested
     class 주문_생성 {
         @Test
-        void 주문_생성이_정상적으로_생성된다() {
+        void 주문_생성이_정상적으로_생성된다() throws InterruptedException {
             // given
-            Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
-            ReflectionTestUtils.setField(product, "id", 1L);
-
             Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
             ReflectionTestUtils.setField(member, "id", 1L);
+
+            Member owner = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_OWNER);
+            ReflectionTestUtils.setField(member, "id", 2L);
+
+            Store store = new Store(owner, "example store", "bizRegNum", "city district address");
+            ReflectionTestUtils.setField(store, "id", 1L);
+
+            Product product = new Product(store, "product1", 10, Status.ON_SALE, Category.MEAT, 10000, "description1");
+            ReflectionTestUtils.setField(product, "id", 1L);
 
             Order order = Order.newOrder("newOrderCode", member, product, 4);
             ReflectionTestUtils.setField(order, "id", 1L);
 
             // when
+            when(redisLockRepository.lock(anyString())).thenReturn(true);
             when(productRepository.findById(anyLong())).thenReturn(Optional.of(product));
             when(memberRepository.findById(anyLong())).thenReturn(Optional.of(member));
             when(orderRepository.save(any(Order.class))).thenReturn(order);
@@ -76,6 +86,7 @@ class OrderServiceTest {
         @Test
         void 주문_생성_도중_Product_를_찾지_못하면_에러를_던진다() {
             // given & when
+            when(redisLockRepository.lock(anyString())).thenReturn(true);
             given(productRepository.findById(anyLong())).willReturn(Optional.empty());
 
             // then
@@ -83,16 +94,23 @@ class OrderServiceTest {
                             () -> orderService.create(1L, 2, 1L))
                     .isInstanceOf(ClientException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.EXCEPTION);
+                    .isEqualTo(ErrorCode.PRODUCT_NOT_FOUND);
         }
 
         @Test
         void 주문_생성_도중_Member_를_찾지_못하면_에러를_던진다() {
             // given
-            Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
+            Member owner = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_OWNER);
+            ReflectionTestUtils.setField(owner, "id", 2L);
+
+            Store store = new Store(owner, "example store", "bizRegNum", "city district address");
+            ReflectionTestUtils.setField(store, "id", 1L);
+
+            Product product = new Product(store, "product1", 10, Status.ON_SALE, Category.MEAT, 10000, "description1");
             ReflectionTestUtils.setField(product, "id", 1L);
 
             // when
+            when(redisLockRepository.lock(anyString())).thenReturn(true);
             when(productRepository.findById(anyLong())).thenReturn(Optional.of(product));
             when(memberRepository.findById(anyLong())).thenReturn(Optional.empty());
 
@@ -107,15 +125,21 @@ class OrderServiceTest {
         @Test
         void 재고보다_많은_수량을_주문하면_에러를_던진다() {
             // given
-            Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
+            Member owner = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_OWNER);
+            ReflectionTestUtils.setField(owner, "id", 2L);
+
+            Store store = new Store(owner, "example store", "bizRegNum", "city district address");
+            ReflectionTestUtils.setField(store, "id", 1L);
+
+            Product product = new Product(store, "product1", 10, Status.ON_SALE, Category.MEAT, 10000, "description1");
             ReflectionTestUtils.setField(product, "id", 1L);
 
             Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
             ReflectionTestUtils.setField(member, "id", 1L);
 
             // when
+            when(redisLockRepository.lock(anyString())).thenReturn(true);
             when(productRepository.findById(anyLong())).thenReturn(Optional.of(product));
-            when(memberRepository.findById(anyLong())).thenReturn(Optional.of(member));
 
             // then
             assertThatThrownBy(() -> orderService.create(1L, 11, 1L))
@@ -132,8 +156,6 @@ class OrderServiceTest {
         @Test
         void 주문_취소가_정상적으로_수행된다() {
             // given
-            Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
-            ReflectionTestUtils.setField(product, "id", 1L);
 
             Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
             ReflectionTestUtils.setField(member, "id", 1L);
@@ -143,7 +165,9 @@ class OrderServiceTest {
 
             Store store = new Store(owner, "example store", "bizRegNum", "city district detail");
             ReflectionTestUtils.setField(store, "id", 1L);
-            ReflectionTestUtils.setField(product, "store", store);
+
+            Product product = new Product(store, "product1", 10, Status.ON_SALE, Category.MEAT, 10000, "description1");
+            ReflectionTestUtils.setField(product, "id", 1L);
 
             Order order = Order.newOrder("newOrderCode", member, product, 4);
             ReflectionTestUtils.setField(order, "id", 1L);
@@ -161,7 +185,13 @@ class OrderServiceTest {
         @Test
         void 주문_상태가_DELI_PROGRESS_라면_에러를_던진다() {
             // given
-            Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
+            Member owner = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_OWNER);
+            ReflectionTestUtils.setField(owner, "id", 2L);
+
+            Store store = new Store(owner, "example store", "bizRegNum", "city district address");
+            ReflectionTestUtils.setField(store, "id", 1L);
+
+            Product product = new Product(store, "product1", 10, Status.ON_SALE, Category.MEAT, 10000, "description1");
             ReflectionTestUtils.setField(product, "id", 1L);
 
             Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
@@ -185,7 +215,13 @@ class OrderServiceTest {
         @Test
         void 주문_상태가_DELI_DONE_라면_에러를_던진다() {
             // given
-            Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
+            Member owner = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_OWNER);
+            ReflectionTestUtils.setField(owner, "id", 2L);
+
+            Store store = new Store(owner, "example store", "bizRegNum", "city district address");
+            ReflectionTestUtils.setField(store, "id", 1L);
+
+            Product product = new Product(store, "product1", 10, Status.ON_SALE, Category.MEAT, 10000, "description1");
             ReflectionTestUtils.setField(product, "id", 1L);
 
             Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
@@ -209,8 +245,6 @@ class OrderServiceTest {
         @Test
         void 자신이_생성하거나_자신의_가게에_들어온_주문이_아니면_에러를_던진다() {
             // given
-            Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
-            ReflectionTestUtils.setField(product, "id", 1L);
 
             Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
             ReflectionTestUtils.setField(member, "id", 1L);
@@ -220,7 +254,9 @@ class OrderServiceTest {
 
             Store store = new Store(owner, "example store", "bizRegNum", "city district detail");
             ReflectionTestUtils.setField(store, "id", 1L);
-            ReflectionTestUtils.setField(product, "store", store);
+
+            Product product = new Product(store, "product1", 10, Status.ON_SALE, Category.MEAT, 10000, "description1");
+            ReflectionTestUtils.setField(product, "id", 1L);
 
             Order order = Order.newOrder("newOrderCode", member, product, 4);
             ReflectionTestUtils.setField(order, "id", 1L);
@@ -244,15 +280,19 @@ class OrderServiceTest {
 
         @Test
         void 배송_출발이_정상적으로_수행된다() {
-            // given
-            Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
-            ReflectionTestUtils.setField(product, "id", 1L);
 
             Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
             ReflectionTestUtils.setField(member, "id", 1L);
 
-            Member owner = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
-            ReflectionTestUtils.setField(member, "id", 2L);
+            Member owner = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_OWNER);
+            ReflectionTestUtils.setField(owner, "id", 2L);
+
+            Store store = new Store(owner, "example store", "bizRegNum", "city district address");
+            ReflectionTestUtils.setField(store, "id", 1L);
+
+            // given
+            Product product = new Product(store, "product1", 10, Status.ON_SALE, Category.MEAT, 10000, "description1");
+            ReflectionTestUtils.setField(product, "id", 1L);
 
             Order order = Order.newOrder("newOrderCode", member, product, 4);
             order.changeStatus(OrderStatus.DELI_PROVISION);
@@ -287,7 +327,13 @@ class OrderServiceTest {
         void 배송_출발_시도_중_DELI_PROVISION_상태가_아니면_에러를_던진다() {
 
             // given
-            Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
+            Member owner = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_OWNER);
+            ReflectionTestUtils.setField(owner, "id", 2L);
+
+            Store store = new Store(owner, "example store", "bizRegNum", "city district address");
+            ReflectionTestUtils.setField(store, "id", 1L);
+
+            Product product = new Product(store, "product1", 10, Status.ON_SALE, Category.MEAT, 10000, "description1");
             ReflectionTestUtils.setField(product, "id", 1L);
 
             Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
@@ -309,7 +355,13 @@ class OrderServiceTest {
         @Test
         void 결제_완료_절차가_정상적으로_수행된다() {
             // given
-            Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
+            Member owner = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_OWNER);
+            ReflectionTestUtils.setField(owner, "id", 2L);
+
+            Store store = new Store(owner, "example store", "bizRegNum", "city district address");
+            ReflectionTestUtils.setField(store, "id", 1L);
+
+            Product product = new Product(store, "product1", 10, Status.ON_SALE, Category.MEAT, 10000, "description1");
             ReflectionTestUtils.setField(product, "id", 1L);
 
             Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
@@ -320,7 +372,7 @@ class OrderServiceTest {
             ReflectionTestUtils.setField(order, "id", 1L);
 
             // when
-            when(orderRepository.findByOrderCode(anyString())).thenReturn(Optional.of(order));
+            when(orderRepository.findByOrderCodeWithMember(anyString())).thenReturn(Optional.of(order));
             orderService.paymentDone(anyString());
 
             // then
@@ -331,7 +383,7 @@ class OrderServiceTest {
         void 결제_완료_절차_중_Order_를_찾지_못하면_에러를_던진다() {
 
             // given & when
-            when(orderRepository.findByOrderCode(anyString())).thenReturn(Optional.empty());
+            when(orderRepository.findByOrderCodeWithMember(anyString())).thenReturn(Optional.empty());
 
             // then
             assertThatThrownBy(() -> orderService.paymentDone(anyString()))
@@ -342,9 +394,14 @@ class OrderServiceTest {
 
         @Test
         void 결제_완료_절차_중_PENDING_상태가_아니면_에러를_던진다() {
-
             // given
-            Product product = new Product("product1", 10, Status.ON_SALE, Category.MEAT, 10000, "url", "description1");
+            Member owner = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_OWNER);
+            ReflectionTestUtils.setField(owner, "id", 2L);
+
+            Store store = new Store(owner, "example store", "bizRegNum", "city district address");
+            ReflectionTestUtils.setField(store, "id", 1L);
+
+            Product product = new Product(store, "product1", 10, Status.ON_SALE, Category.MEAT, 10000, "description1");
             ReflectionTestUtils.setField(product, "id", 1L);
 
             Member member = new Member("email1@example.com", "password", "name", "01023456789", "city district detail", MemberRole.ROLE_MEMBER);
@@ -355,7 +412,7 @@ class OrderServiceTest {
             ReflectionTestUtils.setField(order, "id", 1L);
 
             // when
-            when(orderRepository.findByOrderCode(anyString())).thenReturn(Optional.of(order));
+            when(orderRepository.findByOrderCodeWithMember(anyString())).thenReturn(Optional.of(order));
 
             // then
             assertThatThrownBy(() -> orderService.paymentDone(anyString()))
