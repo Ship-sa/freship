@@ -29,22 +29,31 @@ public enum ErrorCode {
     FORBIDDEN_ORDER_VIEW(HttpStatus.FORBIDDEN, "ORDER-5", "주문을 조회할 권한이 없습니다."),
     FORBIDDEN_DELI_START(HttpStatus.FORBIDDEN, "ORDER-6", "배송 상태를 변경할 권한이 없습니다."),
     LACK_OF_QUANTITY(HttpStatus.BAD_REQUEST, "ORDER-7", "주문 수량이 잔여 수량보다 많습니다."),
+    ORDER_OUT_OF_RETRY(HttpStatus.INTERNAL_SERVER_ERROR, "ORDER-8", "주문량이 폭주하여 요청에 실패했습니다. 다시 시도해주세요."),
 
     // Store 에러코드
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE-1", "가게가 존재하지 않습니다."),
+
     NOT_STORE_OWNER(HttpStatus.FORBIDDEN, "STORE-2", "본인의 가게가 아닙니다."),
+
     BIZ_REG_NUM_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "STORE-3", "이미 존재하는 사업자등록번호입니다."),
 
     // Payment 에러코드
     PAY_CONFIRM_FAILED(HttpStatus.BAD_REQUEST, "PAYMENT-1", "결제 승인 처리에 실패했습니다."),
+
     NO_SUCH_ORDER(HttpStatus.BAD_REQUEST, "PAYMENT-2", "존재하지 않는 주문 건입니다."),
+
     INVALID_PRICE_CHECKED(HttpStatus.BAD_REQUEST, "PAYMENT-3", "주문서와 결제된 가격이 다릅니다."),
 
     // Product 에러코드
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-1", "상품이 존재하지 않습니다."),
+
     PRODUCT_NAME_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "PRODUCT-2", "중복된 상품명입니다."),
+
     IMAGE_UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "PRODUCT-3", "이미지 업로드에 실패했습니다."),
+
     IMAGE_FILE_EMPTY(HttpStatus.BAD_REQUEST, "PRODUCT-4", "이미지 파일이 없습니다."),
+
     IMAGE_DELETE_FAILED(HttpStatus.BAD_REQUEST, "PRODUCT-5", "이미지 삭제에 실패했습니다."),
 
     EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "EXCEPTION", "알 수 없는 에러입니다.");
