@@ -4,12 +4,16 @@ import lombok.RequiredArgsConstructor;
 import me.yeon.freship.common.domain.PageCond;
 import me.yeon.freship.common.domain.PageInfo;
 import me.yeon.freship.common.domain.Response;
+import me.yeon.freship.member.domain.AuthMember;
+import me.yeon.freship.member.domain.MemberRole;
 import me.yeon.freship.orders.domain.CreateRequest;
 import me.yeon.freship.orders.domain.CustomerOrderInfo;
 import me.yeon.freship.orders.domain.OwnerOrderInfo;
 import me.yeon.freship.orders.service.OrderService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -23,18 +27,21 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping("/orders")
-    public ResponseEntity<Response<Void>> create(@RequestBody CreateRequest req) throws InterruptedException {
+    public ResponseEntity<Response<Void>> create(
+            @RequestBody CreateRequest req,
+            @AuthenticationPrincipal AuthMember authMember
+    ) throws InterruptedException {
 
-        Long orderId = orderService.create(req.getMemberId(), req.getOrderAmount(), req.getProductId());
+        Long orderId = orderService.create(authMember.getId(), req.getOrderAmount(), req.getProductId());
         return ResponseEntity.created(URI.create("/orders/" + orderId)).build();
     }
 
     @PostMapping("/orders/{orderId}/cancel")
     public ResponseEntity<Response<Map<String, Long>>> cancel(
             @PathVariable("orderId") Long orderId,
-            @RequestParam(value = "memberId", defaultValue = "1") Long memberId //TODO: authMember로 변경
+            @AuthenticationPrincipal AuthMember authMember
     ) {
-        Long cancelledId = orderService.cancel(orderId, memberId);
+        Long cancelledId = orderService.cancel(orderId, authMember.getId());
         return ResponseEntity.ok(
                 Response.of(Map.of("id", cancelledId))
         );
@@ -46,7 +53,7 @@ public class OrderController {
             @ModelAttribute PageCond pc,
             @RequestParam(value = "memberId", defaultValue = "1") Long memberId //TODO: authMember로 변경
     ) {
-        Page<CustomerOrderInfo> resultPage = orderService.findAllByCustomer(pc.getPageNum(), pc.getPageSize());
+        Page<CustomerOrderInfo> resultPage = orderService.findAllByCustomer(memberId, pc.getPageNum(), pc.getPageSize());
         PageInfo pageInfo = PageInfo.builder()
                 .pageNum(pc.getPageNum())
                 .pageSize(pc.getPageSize())
@@ -58,22 +65,23 @@ public class OrderController {
                 Response.of(resultPage.getContent(), pageInfo));
     }
 
+    @Secured(MemberRole.Authority.MEMBER)
     @GetMapping("/orders/{orderId}")
     public ResponseEntity<Response<CustomerOrderInfo>> findOneForMember(
             @PathVariable(name = "orderId") Long orderId,
-            @RequestParam(value = "memberId", defaultValue = "1") Long memberId //TODO: authMember로 변경
+            @AuthenticationPrincipal AuthMember authMember
     ) {
         return ResponseEntity.ok(
-                Response.of(orderService.findOneByCustomer(memberId, orderId)));
+                Response.of(orderService.findOneByCustomer(authMember.getId(), orderId)));
     }
 
     // 배송출발은 Owner만 가능
     @PutMapping("/manage/orders/{orderId}/delivery")
     public ResponseEntity<Response<Void>> startDelivery(
             @PathVariable("orderId") Long orderId,
-            @RequestParam(value = "memberId", defaultValue = "1") Long memberId //TODO: authMember로 변경
+            @AuthenticationPrincipal AuthMember authMember
     ) {
-        orderService.startDelivery(orderId, memberId);
+        orderService.startDelivery(orderId, authMember.getId());
         return ResponseEntity.ok().build();
     }
 
@@ -81,9 +89,9 @@ public class OrderController {
     @GetMapping("/manage/orders")
     public ResponseEntity<Response<List<OwnerOrderInfo>>> findAllForOwner(
             @ModelAttribute PageCond pc,
-            @RequestParam(value = "memberId", defaultValue = "1") Long memberId //TODO: authMember로 변경
+            @AuthenticationPrincipal AuthMember authMember
     ) {
-        Page<OwnerOrderInfo> resultPage = orderService.findAllByOwner(memberId, pc.getPageNum(), pc.getPageSize());
+        Page<OwnerOrderInfo> resultPage = orderService.findAllByOwner(authMember.getId(), pc.getPageNum(), pc.getPageSize());
         PageInfo pageInfo = PageInfo.builder()
                 .pageNum(pc.getPageNum())
                 .pageSize(pc.getPageSize())

@@ -30,11 +30,12 @@ public class OrderRepositoryCustomImpl implements OrderRepositoryCustom {
     }
 
     @Override
-    public Page<CustomerOrderInfo> findAllByCustomer(Pageable pageable) {
+    public Page<CustomerOrderInfo> findAllByCustomer(Pageable pageable, Long memberId) {
 
         List<CustomerOrderInfo> results = queryFactory
-                .select(order)
-                .from(order)
+                .selectFrom(order)
+                .join(order.member, member)
+                .where(member.id.eq(memberId))
                 .orderBy(order.createdAt.desc())
                 .fetch()
                 .stream()
@@ -43,7 +44,9 @@ public class OrderRepositoryCustomImpl implements OrderRepositoryCustom {
 
         JPAQuery<Long> countQuery = queryFactory
                 .select(order.count())
-                .from(order);
+                .from(order)
+                .join(order.member, member)
+                .where(member.id.eq(memberId));
 
         return PageableExecutionUtils.getPage(results, pageable, countQuery::fetchOne);
     }
