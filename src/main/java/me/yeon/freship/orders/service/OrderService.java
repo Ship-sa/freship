@@ -109,7 +109,7 @@ public class OrderService {
 
     @Transactional
     public void paymentDone(String orderCode) {
-        Order order = repository.findByOrderCode(orderCode)
+        Order order = repository.findByOrderCodeWithMember(orderCode)
                 .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_ORDER));
 
         if (order.getStatus() != OrderStatus.PENDING) {

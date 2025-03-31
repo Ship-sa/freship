@@ -7,6 +7,7 @@ import me.yeon.freship.payment.domain.CheckoutRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
 @RequiredArgsConstructor
@@ -15,10 +16,10 @@ public class TossPaymentClient {
     private final OrderRepository orderRepository;
 
 
-    @GetMapping("/payment/checkout")
-    public String widget(Model model) {
+    @GetMapping("/payment/{orderId}/checkout")
+    public String widget(Model model, @PathVariable("orderId") Long orderId) {
 
-        Order order = orderRepository.findByIdWithMember(1L)
+        Order order = orderRepository.findByIdWithMember(orderId)
                 .orElseThrow();
 
         CheckoutRequest request = CheckoutRequest.fromOrder(order);

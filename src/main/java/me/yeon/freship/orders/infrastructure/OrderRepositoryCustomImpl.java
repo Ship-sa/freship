@@ -6,7 +6,6 @@ import jakarta.persistence.EntityManager;
 import me.yeon.freship.orders.domain.CustomerOrderInfo;
 import me.yeon.freship.orders.domain.Order;
 import me.yeon.freship.orders.domain.OwnerOrderInfo;
-import me.yeon.freship.orders.domain.QOrder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
@@ -79,13 +78,13 @@ public class OrderRepositoryCustomImpl implements OrderRepositoryCustom {
     @Override
     public Optional<Order> findByIdAndOwnerId(Long id, Long ownerId) {
 
-        Order order = queryFactory
-                .selectFrom(QOrder.order)
-                .join(product).on(QOrder.order.productId.eq(product.id))
+        Order oneOrder = queryFactory
+                .selectFrom(order)
+                .join(product).on(order.productId.eq(product.id))
                 .join(product.store, store)
                 .join(store.member, member)
-                .where(member.id.eq(ownerId))
+                .where(order.id.eq(id), member.id.eq(ownerId))
                 .fetchOne();
-        return Optional.ofNullable(order);
+        return Optional.ofNullable(oneOrder);
     }
 }

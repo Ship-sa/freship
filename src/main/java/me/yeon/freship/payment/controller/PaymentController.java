@@ -3,6 +3,10 @@ package me.yeon.freship.payment.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.yeon.freship.common.domain.Response;
+import me.yeon.freship.common.domain.constant.ErrorCode;
+import me.yeon.freship.common.exception.ClientException;
+import me.yeon.freship.orders.domain.Order;
+import me.yeon.freship.orders.infrastructure.OrderRepository;
 import me.yeon.freship.payment.domain.CheckoutFailResponse;
 import me.yeon.freship.payment.domain.CheckoutResponse;
 import me.yeon.freship.payment.domain.ConfirmResponse;
@@ -20,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PaymentController {
     private final PaymentService paymentService;
+    private final OrderRepository orderRepository;
 
 
     @GetMapping("/success")
@@ -27,8 +32,11 @@ public class PaymentController {
 
         ConfirmResponse confirmResponse = paymentService.verifyAndSend(checkoutResponse);
 
+        Order order = orderRepository.findByOrderCodeWithMember(checkoutResponse.getOrderId())
+                .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_ORDER));
+
         return ResponseEntity.ok(
-                Response.of(paymentService.confirmPayment(confirmResponse))
+                Response.of(paymentService.confirmPayment(confirmResponse, order.getMember().getId()))
         );
     }
 
