@@ -51,9 +51,9 @@ public class OrderController {
     @GetMapping("/orders")
     public ResponseEntity<Response<List<CustomerOrderInfo>>> findAllForMember(
             @ModelAttribute PageCond pc,
-            @RequestParam(value = "memberId", defaultValue = "1") Long memberId //TODO: authMember로 변경
+            @AuthenticationPrincipal AuthMember authMember
     ) {
-        Page<CustomerOrderInfo> resultPage = orderService.findAllByCustomer(memberId, pc.getPageNum(), pc.getPageSize());
+        Page<CustomerOrderInfo> resultPage = orderService.findAllByCustomer(authMember.getId(), pc.getPageNum(), pc.getPageSize());
         PageInfo pageInfo = PageInfo.builder()
                 .pageNum(pc.getPageNum())
                 .pageSize(pc.getPageSize())
