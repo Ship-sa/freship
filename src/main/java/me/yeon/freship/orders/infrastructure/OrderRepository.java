@@ -13,6 +13,6 @@ public interface OrderRepository extends JpaRepository<Order, Long>, OrderReposi
     Optional<Order> findByIdWithMember(@Param("orderId") Long id);
 
     @Query("select o from Order o join fetch o.member where o.orderCode=:orderCode")
-    Optional<Order> findByOrderCode(@Param("orderCode") String orderCode);
+    Optional<Order> findByOrderCodeWithMember(@Param("orderCode") String orderCode);
 
 }

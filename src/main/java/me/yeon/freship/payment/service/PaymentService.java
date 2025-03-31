@@ -34,7 +34,7 @@ public class PaymentService {
     @Transactional
     public ConfirmResponse verifyAndSend(CheckoutResponse res) {
 
-        Order order = orderRepository.findByOrderCode(res.getOrderId())
+        Order order = orderRepository.findByOrderCodeWithMember(res.getOrderId())
                 .orElseThrow(() -> new ClientException(ErrorCode.NO_SUCH_ORDER));
 
         // PG에 요청된 금액과 주문서 금액 비교
@@ -47,12 +47,12 @@ public class PaymentService {
     }
 
     @Transactional
-    public ConfirmResponse confirmPayment(ConfirmResponse confirmResponse) {
+    public ConfirmResponse confirmPayment(ConfirmResponse confirmResponse, Long memberId) {
         // 결제 정보 저장
-        paymentHistoryRepository.save(confirmResponse.toSuccessHistory(1L));
+        paymentHistoryRepository.save(confirmResponse.toSuccessHistory(memberId));
         // 주문 정보 저장
         orderService.paymentDone(confirmResponse.getOrderId());
-        
+
         return confirmResponse;
     }
 
