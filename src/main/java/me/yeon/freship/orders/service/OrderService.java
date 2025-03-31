@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.yeon.freship.common.domain.constant.ErrorCode;
 import me.yeon.freship.common.exception.ClientException;
+import me.yeon.freship.common.exception.ServerException;
 import me.yeon.freship.common.infrastructure.ClockHolder;
-import me.yeon.freship.common.infrastructure.RedisLockRepository;
 import me.yeon.freship.member.domain.Member;
 import me.yeon.freship.member.domain.MemberRole;
 import me.yeon.freship.member.infrastructure.MemberRepository;
@@ -15,6 +15,7 @@ import me.yeon.freship.orders.domain.OwnerOrderInfo;
 import me.yeon.freship.orders.domain.contant.OrderStatus;
 import me.yeon.freship.orders.infrastructure.OrderCodeGenerator;
 import me.yeon.freship.orders.infrastructure.OrderRepository;
+import me.yeon.freship.orders.infrastructure.RedisOrderLockRepository;
 import me.yeon.freship.product.domain.Product;
 import me.yeon.freship.product.infrastructure.ProductRepository;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.UUID;
 
 @Slf4j @Service
 @RequiredArgsConstructor
@@ -37,13 +39,26 @@ public class OrderService {
     private final OrderRepository repository;
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
-    private final RedisLockRepository redisLockRepository;
+    private final RedisOrderLockRepository redisOrderLockRepository;
+
+    private final ThreadLocal<String> requestId = new ThreadLocal<>();
+    private final ThreadLocal<Long> accRetryTime = ThreadLocal.withInitial(() -> 0L);
+
+    public static final int RETRY_LIMIT_MILLIS = 300;
+    public static final int UNIT_OF_RETRY_MILLIS = 30;
 
     @Transactional
-    @Secured(MemberRole.Authority.MEMBER)
+//    @Secured(MemberRole.Authority.MEMBER)
     public Long create(Long memberId, int orderAmount, Long productId) throws InterruptedException {
-        while (!redisLockRepository.lock(productId.toString())) {
-            Thread.sleep(5000);
+        requestId.set(UUID.randomUUID().toString());
+        while (!redisOrderLockRepository.lock(productId.toString(), requestId.get())) {
+            Long accRetryTime = this.accRetryTime.get();
+
+            if (accRetryTime > RETRY_LIMIT_MILLIS) {
+                throw new ServerException(ErrorCode.ORDER_OUT_OF_RETRY);
+            }
+            Thread.sleep(UNIT_OF_RETRY_MILLIS);
+            this.accRetryTime.set(accRetryTime + UNIT_OF_RETRY_MILLIS);
         }
 
         try {
@@ -63,8 +78,11 @@ public class OrderService {
                     .save(Order.newOrder(orderCode, member, product, orderAmount))
                     .getId();
         } finally {
-            redisLockRepository.unlock(productId.toString());
+            redisOrderLockRepository.unlock(productId.toString(), requestId.get());
+            requestId.remove();
+            accRetryTime.set(0L);
         }
+
     }
 
     @Transactional
