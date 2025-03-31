@@ -7,6 +7,7 @@ import me.yeon.freship.common.exception.ClientException;
 import me.yeon.freship.common.exception.ServerException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -37,9 +38,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
 
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(AuthorizationDeniedException ade) {
+        ErrorCode errorCode = ErrorCode.INVALID_MEMBER_ROLE;
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ErrorResponse.of(errorCode));
+    }
+
     @ExceptionHandler(ServerException.class)
-    public ResponseEntity<ErrorResponse> handleServerException(ServerException ce) {
-        ErrorCode errorCode = ce.getErrorCode();
+    public ResponseEntity<ErrorResponse> handleServerException(ServerException se) {
+        ErrorCode errorCode = se.getErrorCode();
         return ResponseEntity
                 .status(errorCode.getStatus())
                 .body(ErrorResponse.of(errorCode));

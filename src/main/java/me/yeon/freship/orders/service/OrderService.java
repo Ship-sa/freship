@@ -7,6 +7,7 @@ import me.yeon.freship.common.exception.ClientException;
 import me.yeon.freship.common.infrastructure.ClockHolder;
 import me.yeon.freship.common.infrastructure.RedisLockRepository;
 import me.yeon.freship.member.domain.Member;
+import me.yeon.freship.member.domain.MemberRole;
 import me.yeon.freship.member.infrastructure.MemberRepository;
 import me.yeon.freship.orders.domain.CustomerOrderInfo;
 import me.yeon.freship.orders.domain.Order;
@@ -19,6 +20,7 @@ import me.yeon.freship.product.infrastructure.ProductRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +40,7 @@ public class OrderService {
     private final RedisLockRepository redisLockRepository;
 
     @Transactional
+    @Secured(MemberRole.Authority.MEMBER)
     public Long create(Long memberId, int orderAmount, Long productId) throws InterruptedException {
         while (!redisLockRepository.lock(productId.toString())) {
             Thread.sleep(5000);
@@ -65,6 +68,7 @@ public class OrderService {
     }
 
     @Transactional
+    @Secured(MemberRole.Authority.MEMBER)
     public Long cancel(Long orderId, Long memberId) {
         Order order = repository.findByIdWithMember(orderId)
                 .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_ORDER));
@@ -90,6 +94,7 @@ public class OrderService {
     }
 
     @Transactional
+    @Secured(MemberRole.Authority.OWNER)
     public void startDelivery(Long orderId, Long ownerId) {
         Order order = repository.findByIdAndOwnerId(orderId, ownerId)
                 .orElseThrow(() -> new ClientException(ErrorCode.FORBIDDEN_DELI_START));
@@ -115,6 +120,7 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
+    @Secured(MemberRole.Authority.MEMBER)
     public CustomerOrderInfo findOneByCustomer(Long memberId, Long orderId) {
         Order order = repository.findByIdWithMember(orderId)
                 .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_ORDER));
@@ -127,12 +133,14 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public Page<CustomerOrderInfo> findAllByCustomer(int pageNum, int pageSize) {
+    @Secured(MemberRole.Authority.MEMBER)
+    public Page<CustomerOrderInfo> findAllByCustomer(Long memberId, int pageNum, int pageSize) {
         Pageable pageRequest = PageRequest.of(pageNum - 1, pageSize);
-        return repository.findAllByCustomer(pageRequest);
+        return repository.findAllByCustomer(pageRequest, memberId);
     }
 
     @Transactional(readOnly = true)
+    @Secured(MemberRole.Authority.OWNER)
     public Page<OwnerOrderInfo> findAllByOwner(Long memberId, int pageNum, int pageSize) {
         Pageable pageRequest = PageRequest.of(pageNum - 1, pageSize);
         return repository.findAllByOwner(pageRequest, memberId);

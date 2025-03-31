@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface OrderRepositoryCustom {
 
-    Page<CustomerOrderInfo> findAllByCustomer(Pageable pageable);
+    Page<CustomerOrderInfo> findAllByCustomer(Pageable pageable, Long memberId);
 
     Page<OwnerOrderInfo> findAllByOwner(Pageable pageable, Long memberId);
 

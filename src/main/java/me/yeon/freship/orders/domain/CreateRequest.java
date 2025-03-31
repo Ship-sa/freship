@@ -6,7 +6,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class CreateRequest {
-    private Long memberId;
     private int orderAmount;
     private Long productId;
 }
