@@ -18,6 +18,7 @@ import me.yeon.freship.orders.infrastructure.OrderRepository;
 import me.yeon.freship.orders.infrastructure.RedisOrderLockRepository;
 import me.yeon.freship.product.domain.Product;
 import me.yeon.freship.product.infrastructure.ProductRepository;
+import me.yeon.freship.product.service.ProductService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +34,8 @@ import java.util.UUID;
 @Slf4j @Service
 @RequiredArgsConstructor
 public class OrderService {
+    private final ProductService productService;
+
     private final OrderCodeGenerator orderCodeGenerator;
     private final ClockHolder clockHolder;
 
@@ -42,37 +45,31 @@ public class OrderService {
     private final RedisOrderLockRepository redisOrderLockRepository;
 
     private final ThreadLocal<String> requestId = new ThreadLocal<>();
-    private final ThreadLocal<Long> accRetryTime = ThreadLocal.withInitial(() -> 0L);
 
-    public static final int RETRY_LIMIT_MILLIS = 300;
-    public static final int UNIT_OF_RETRY_MILLIS = 30;
+    public static final int MAX_ATTEMPTS = 10;
+    public static final int INITIAL_BACKOFF = 100;
+    public static final int MAX_BACKOFF = 2000;
 
-    @Transactional
-//    @Secured(MemberRole.Authority.MEMBER)
+    @Secured(MemberRole.Authority.MEMBER)
     public Long create(Long memberId, int orderAmount, Long productId) throws InterruptedException {
         requestId.set(UUID.randomUUID().toString());
-        while (!redisOrderLockRepository.lock(productId.toString(), requestId.get())) {
-            Long accRetryTime = this.accRetryTime.get();
+        int attempts = 0;
+        int backoff = INITIAL_BACKOFF;
 
-            if (accRetryTime > RETRY_LIMIT_MILLIS) {
+        while (!redisOrderLockRepository.lock(productId.toString(), requestId.get())) {
+            if (++attempts > MAX_ATTEMPTS) {
                 throw new ServerException(ErrorCode.ORDER_OUT_OF_RETRY);
             }
-            Thread.sleep(UNIT_OF_RETRY_MILLIS);
-            this.accRetryTime.set(accRetryTime + UNIT_OF_RETRY_MILLIS);
+            Thread.sleep(backoff);
+            backoff = Math.min(MAX_BACKOFF, 2 * backoff);
         }
 
         try {
-            Product product = productRepository.findById(productId)
-                    .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_NOT_FOUND));
-            // product의 재고 차감
-            if (product.getQuantity() - orderAmount < 0) {
-                throw new ClientException(ErrorCode.LACK_OF_QUANTITY);
-            }
+            Product product = productService.decreaseQuantity(productId, orderAmount);
             String orderCode = orderCodeGenerator.create(product.getCategory(), getCurrentDate());
 
             Member member = memberRepository.findById(memberId)
                     .orElseThrow(() -> new ClientException(ErrorCode.NOT_FOUND_MEMBER));
-            product.decreaseQuantity(orderAmount);
 
             return repository
                     .save(Order.newOrder(orderCode, member, product, orderAmount))
@@ -80,7 +77,6 @@ public class OrderService {
         } finally {
             redisOrderLockRepository.unlock(productId.toString(), requestId.get());
             requestId.remove();
-            accRetryTime.set(0L);
         }
 
     }

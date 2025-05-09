@@ -27,7 +27,7 @@ public class RedisOrderLockRepository {
     public Boolean unlock(String key, String uuid) {
         return redisTemplate.execute(
                 checkAndReleaseLockScript,
-                List.of(key),
+                List.of(createKey(key)),
                 uuid
         );
     }

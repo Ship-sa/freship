@@ -1,23 +1,16 @@
 package me.yeon.freship.product.service;
 
 import lombok.RequiredArgsConstructor;
-import me.yeon.freship.common.domain.PageInfo;
 import me.yeon.freship.common.domain.constant.ErrorCode;
 import me.yeon.freship.common.exception.ClientException;
 import me.yeon.freship.member.domain.AuthMember;
 import me.yeon.freship.member.domain.Member;
 import me.yeon.freship.member.infrastructure.MemberRepository;
-import me.yeon.freship.product.domain.Product;
-import me.yeon.freship.product.domain.ProductRankResponse;
-import me.yeon.freship.product.domain.ProductReadCountResponse;
-import me.yeon.freship.product.domain.ProductSearchResponse;
-import org.springframework.cache.annotation.Cacheable;
-import me.yeon.freship.product.domain.Category;
-import me.yeon.freship.product.domain.ProductRequest;
-import me.yeon.freship.product.domain.ProductResponse;
+import me.yeon.freship.product.domain.*;
 import me.yeon.freship.product.infrastructure.ProductRepository;
 import me.yeon.freship.store.domain.Store;
 import me.yeon.freship.store.infrastructure.StoreRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -199,7 +192,7 @@ public class ProductService {
 
     // 조회수가 없는 경우엔 1로 초기화, 존재하는 경우엔 조회수를 1만큼 증가
     public Long addReadCount(Long productId) {
-        if (productRedisUtils.notExistsReadCount(productId)){
+        if (productRedisUtils.notExistsReadCount(productId)) {
             productRedisUtils.setReadCount(productId);
             return 1L;
         }
@@ -218,6 +211,18 @@ public class ProductService {
 
         List<ProductRankResponse> readCountResponses = ProductRankResponse.toProductRankResponseList(products);
         return readCountResponses;
+    }
+
+    @Transactional
+    public Product decreaseQuantity(Long productId, int orderAmount) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ClientException(ErrorCode.PRODUCT_NOT_FOUND));
+        if (product.getQuantity() - orderAmount < 0) {
+            throw new ClientException(ErrorCode.LACK_OF_QUANTITY);
+        }
+        product.decreaseQuantity(orderAmount);
+
+        return product;
     }
 
     private Page<Product> getProductPage(String productName, int pageNum, int pageSize) {

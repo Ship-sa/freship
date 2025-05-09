@@ -45,3 +45,5 @@ out/
 ## local properties
 *-local.yml
 *-local.properties
+
+/local/
