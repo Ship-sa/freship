@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers(request -> request.getRequestURI().startsWith("/auth")).permitAll()
                         .requestMatchers(request -> request.getRequestURI().startsWith("/payment")).permitAll()
                         .requestMatchers("/css/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 .build();
