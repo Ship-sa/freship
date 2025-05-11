@@ -213,31 +213,31 @@ return false
 
 <br/><br/>
 
-- ThreadLocal에 UUID, 락 획득 대기 시간 저장하여 관리
+- ThreadLocal에 UUID 저장하여 관리
+- Exponential BackOff
 - 최대 대기 시간을 초과하면 Exception을 던짐
 
 ```java
 public Long create(Long memberId, int orderAmount, Long productId) throws InterruptedException {
-        requestId.set(UUID.randomUUID().toString());
-        while (!redisOrderLockRepository.lock(productId.toString(), requestId.get())) {
-            Long accRetryTime = this.accRetryTime.get();
+    requestId.set(UUID.randomUUID().toString());
+    int attempts = 0;
+    int backoff = INITIAL_BACKOFF;
 
-            if (accRetryTime > RETRY_LIMIT_MILLIS) {
-                throw new ServerException(ErrorCode.ORDER_OUT_OF_RETRY);
-            }
-            Thread.sleep(UNIT_OF_RETRY_MILLIS);
-            this.accRetryTime.set(accRetryTime + UNIT_OF_RETRY_MILLIS);
+    while (!redisOrderLockRepository.lock(productId.toString(), requestId.get())) {
+        if (++attempts > MAX_ATTEMPTS) {
+            throw new ServerException(ErrorCode.ORDER_OUT_OF_RETRY);
         }
+        Thread.sleep(backoff);
+        backoff = Math.min(MAX_BACKOFF, 2 * backoff);
+    }
 
-        try {
-            // ... 락이 필요한 로직
-        } finally {
-            redisOrderLockRepository.unlock(productId.toString(), requestId.get());
-
-            // thread local 초기화
-            requestId.remove();
-            accRetryTime.set(0L);
-        }
+    try {
+       // ... 락이 필요한 로직
+    } finally {
+        redisOrderLockRepository.unlock(productId.toString(), requestId.get());
+        requestId.remove();
+    }
+}
 ```
 
 </details>
